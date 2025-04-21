@@ -18,7 +18,7 @@ export default function Navbar() {
           </Link>
 
           <div className="flex items-center space-x-4">
-            {session ? (
+            {session?.user ? (
               <>
                 {session.user.role === Role.ADMIN && (
                   <Link href="/admin" className="text-gray-600 hover:text-primary-600">
