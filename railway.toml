@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "npm run build"
+buildCommand = "chmod +x migrate.sh && ./migrate.sh && npm run build"
 
 [deploy]
 startCommand = "npm run start"
