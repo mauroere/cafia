@@ -1,0 +1,160 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  VENDOR
+  CUSTOMER
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY_FOR_PICKUP
+  OUT_FOR_DELIVERY
+  DELIVERED
+  PICKED_UP
+  CANCELLED
+  REJECTED
+}
+
+enum OrderType {
+  DELIVERY
+  TAKEAWAY
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String   @unique
+  password  String
+  role      Role     @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  business  Business? @relation(fields: [businessId], references: [id])
+  businessId String? @unique
+  orders    Order[]
+  addresses Address[]
+}
+
+model Business {
+  id                    String    @id @default(cuid())
+  owner                 User      @relation(fields: [ownerId], references: [id])
+  ownerId               String    @unique
+  name                  String
+  slug                  String    @unique
+  description           String?
+  logoUrl               String?
+  address               String?
+  phone                 String?
+  whatsappNumber        String?
+  isActive              Boolean   @default(false)
+  isOpen                Boolean   @default(false)
+  enableDelivery        Boolean   @default(true)
+  enableTakeaway        Boolean   @default(true)
+  deliveryFee           Float     @default(0)
+  estimatedPrepTime     Int?
+  mercadoPagoAccessToken String?
+  mercadoPagoPublicKey  String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  categories            Category[]
+  products              Product[]
+  orders                Order[]
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId  String
+  name        String
+  description String?
+  order       Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+
+  @@index([businessId])
+}
+
+model Product {
+  id          String    @id @default(cuid())
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  businessId  String
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId  String
+  name        String
+  description String?
+  price       Float
+  imageUrl    String?
+  isAvailable Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  orderItems  OrderItem[]
+
+  @@index([businessId])
+  @@index([categoryId])
+}
+
+model Order {
+  id                   String      @id @default(cuid())
+  shortId              String      @unique @default(cuid())
+  customer             User        @relation(fields: [customerId], references: [id])
+  customerId           String
+  business             Business    @relation(fields: [businessId], references: [id])
+  businessId           String
+  status               OrderStatus @default(PENDING)
+  type                 OrderType
+  totalAmount          Float
+  deliveryAddress      String?
+  customerPhone        String?
+  notes                String?
+  mercadoPagoPaymentId String?
+  mercadoPagoStatus    String?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  items                OrderItem[]
+
+  @@index([customerId])
+  @@index([businessId])
+  @@index([createdAt])
+}
+
+model OrderItem {
+  id             String   @id @default(cuid())
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId        String
+  product        Product  @relation(fields: [productId], references: [id])
+  productId      String
+  quantity       Int
+  unitPrice      Float
+  subtotal       Float
+  productSnapshot Json?
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  street    String
+  number    String?
+  city      String
+  state     String?
+  zipCode   String?
+  details   String?
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+} 
