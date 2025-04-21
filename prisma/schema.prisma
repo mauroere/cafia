@@ -38,7 +38,7 @@ model User {
   role      Role     @default(CUSTOMER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  business  Business? @relation(fields: [businessId], references: [id])
+  business  Business? @relation("UserBusiness")
   businessId String? @unique
   orders    Order[]
   addresses Address[]
@@ -46,7 +46,7 @@ model User {
 
 model Business {
   id                    String    @id @default(cuid())
-  owner                 User      @relation(fields: [ownerId], references: [id])
+  owner                 User      @relation("UserBusiness", fields: [ownerId], references: [id])
   ownerId               String    @unique
   name                  String
   slug                  String    @unique
