@@ -2,12 +2,11 @@ import { prisma } from '@/lib/prisma'
 
 export default async function BusinessesPage() {
   const businesses = await prisma.business.findMany({
-    include: {
-      user: {
-        select: {
-          name: true,
-        },
-      },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      ownerId: true,
     },
   })
 
