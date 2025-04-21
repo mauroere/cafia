@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
-import { Role } from '@/types/database'
+import { Role } from '@prisma/client'
 
 export default function Navbar() {
   const { data: session } = useSession()

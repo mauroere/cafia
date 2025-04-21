@@ -1,5 +1,5 @@
 import 'next-auth'
-import { Role } from './database'
+import { Role } from '@prisma/client'
 
 declare module 'next-auth' {
   interface User {
