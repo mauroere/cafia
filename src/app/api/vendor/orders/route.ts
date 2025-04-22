@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { Prisma } from '@prisma/client'
+import { Prisma, OrderStatus } from '@prisma/client'
 
 export async function GET(request: Request) {
   try {
@@ -39,7 +39,7 @@ export async function GET(request: Request) {
 
     // Agregar filtro de estado si se proporciona
     if (status) {
-      where.status = status as Prisma.OrderStatus
+      where.status = status as OrderStatus
     }
 
     // Obtener pedidos recientes
