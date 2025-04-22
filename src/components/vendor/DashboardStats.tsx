@@ -1,3 +1,5 @@
+'use client'
+
 import { Card } from '@/components/ui/Card'
 import { CurrencyDollarIcon, ShoppingBagIcon, ClockIcon, UserGroupIcon } from '@heroicons/react/24/outline'
 import { useEffect, useState } from 'react'

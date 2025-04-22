@@ -1,3 +1,5 @@
+'use client'
+
 import { Card } from '@/components/ui/Card'
 import { OrderStatus } from '@prisma/client'
 import { useEffect, useState } from 'react'
