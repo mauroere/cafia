@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Product, Category } from '@prisma/client'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import Image from 'next/image'
 
 type ProductWithCategory = Product & {
   category: Category
@@ -46,11 +47,20 @@ export default function ProductList({ products, categories }: ProductListProps) 
           key={product.id}
           className="bg-white rounded-lg shadow-md overflow-hidden"
         >
-          <img
-            src={product.imageUrl}
-            alt={product.name}
-            className="w-full h-48 object-cover"
-          />
+          <div className="relative w-full h-48">
+            {product.imageUrl ? (
+              <Image
+                src={product.imageUrl}
+                alt={product.name}
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                <span className="text-gray-400">Sin imagen</span>
+              </div>
+            )}
+          </div>
           <div className="p-4">
             <h3 className="text-lg font-semibold">{product.name}</h3>
             <p className="text-gray-600 text-sm mb-2">{product.category.name}</p>
