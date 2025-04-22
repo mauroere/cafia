@@ -1,15 +1,23 @@
 'use client'
 
-import { useState } from 'react'
-import { signIn } from 'next-auth/react'
+import { useState, useEffect } from 'react'
+import { signIn, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Role } from '@prisma/client'
 
 export default function VendorLoginPage() {
   const router = useRouter()
+  const { data: session, status } = useSession()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Redirigir si ya está autenticado
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user?.role === Role.VENDOR) {
+      router.push('/vendor')
+    }
+  }, [status, session, router])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -29,24 +37,45 @@ export default function VendorLoginPage() {
 
       if (result?.error) {
         setError('Credenciales inválidas')
-      } else {
-        // Obtener el rol del usuario de la respuesta
-        const response = await fetch('/api/auth/me')
-        const userData = await response.json()
-        
-        if (userData.role !== Role.VENDOR) {
-          setError('Esta cuenta no tiene permisos de vendedor')
-          return
-        }
-
-        router.push('/vendor')
-        router.refresh()
+        return
       }
+
+      // Verificar el rol del usuario
+      const response = await fetch('/api/auth/me')
+      if (!response.ok) {
+        setError('Error al verificar el rol del usuario')
+        return
+      }
+
+      const userData = await response.json()
+      if (userData.role !== Role.VENDOR) {
+        setError('Esta cuenta no tiene permisos de vendedor')
+        return
+      }
+
+      // Redirigir al dashboard de vendedor
+      router.push('/vendor')
+      router.refresh()
     } catch (error) {
+      console.error('Error en el login:', error)
       setError('Ocurrió un error al iniciar sesión')
     } finally {
       setLoading(false)
     }
+  }
+
+  if (status === 'loading') {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md space-y-8">
+          <div>
+            <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+              Cargando...
+            </h2>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
