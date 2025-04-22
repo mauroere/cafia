@@ -1,30 +1,43 @@
 'use client'
 
-import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import Link from 'next/link'
 
 function ErrorContent() {
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
 
+  const getErrorMessage = () => {
+    switch (error) {
+      case 'AccessDenied':
+        return 'No tienes permiso para acceder a esta página.'
+      case 'Verification':
+        return 'El enlace de verificación ha expirado o ya ha sido usado.'
+      case 'Configuration':
+        return 'Hay un problema con la configuración del servidor.'
+      case 'InvalidCredentials':
+        return 'Las credenciales proporcionadas no son válidas.'
+      default:
+        return 'Ocurrió un error durante la autenticación.'
+    }
+  }
+
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Error de autenticación
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            {error === 'OAuthAccountNotLinked'
-              ? 'Esta cuenta ya está vinculada a otro método de inicio de sesión.'
-              : 'Ha ocurrido un error durante el proceso de autenticación.'}
+            {getErrorMessage()}
           </p>
         </div>
-        <div className="mt-8 flex justify-center">
+        <div className="mt-4 text-center">
           <Link
-            href="/auth/login"
-            className="rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+            href="/auth/vendor/login"
+            className="font-medium text-primary-600 hover:text-primary-500"
           >
             Volver al inicio de sesión
           </Link>
@@ -34,17 +47,11 @@ function ErrorContent() {
   )
 }
 
-export default function AuthErrorPage() {
+export default function ErrorPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md space-y-8">
-          <div>
-            <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-              Cargando...
-            </h2>
-          </div>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Cargando...</p>
       </div>
     }>
       <ErrorContent />
