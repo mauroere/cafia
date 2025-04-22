@@ -63,7 +63,7 @@ export async function GET(request: Request) {
       description: business.description,
       logoUrl: business.logoUrl || '/images/default-business.jpg',
       slug: business.slug,
-      deliveryTime: business.deliveryTime || '30-45 min',
+      estimatedPrepTime: business.estimatedPrepTime || 30,
       deliveryFee: business.deliveryFee || 5,
       categories: business.categories.map(cat => cat.name),
       orderCount: business._count.orders
