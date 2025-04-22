@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { OrderStatus } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,7 +47,7 @@ export async function GET() {
       prisma.order.aggregate({
         where: { 
           businessId: business.id,
-          status: 'COMPLETED'
+          status: OrderStatus.COMPLETED
         },
         _sum: {
           total: true
@@ -56,14 +57,14 @@ export async function GET() {
       prisma.order.count({
         where: { 
           businessId: business.id,
-          status: 'PENDING'
+          status: OrderStatus.PENDING
         }
       }),
       // Pedidos completados
       prisma.order.count({
         where: { 
           businessId: business.id,
-          status: 'COMPLETED'
+          status: OrderStatus.COMPLETED
         }
       }),
       // Total de productos
