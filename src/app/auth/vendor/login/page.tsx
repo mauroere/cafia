@@ -1,20 +1,12 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState } from 'react'
 import { signIn } from 'next-auth/react'
-import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Role } from '@prisma/client'
 
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
-
-function LoginForm() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
+export default function VendorLoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const callbackUrl = searchParams.get('callbackUrl') || '/vendor'
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -29,29 +21,9 @@ function LoginForm() {
       const result = await signIn('credentials', {
         email,
         password,
-        callbackUrl,
-        redirect: false,
+        redirect: true,
+        callbackUrl: '/vendor'
       })
-
-      if (result?.error) {
-        setError('Credenciales inválidas')
-        return
-      }
-
-      // Verificar el rol del usuario
-      const response = await fetch('/api/auth/me')
-      if (!response.ok) {
-        throw new Error('Error al verificar el rol del usuario')
-      }
-
-      const userData = await response.json()
-      if (userData.role !== Role.VENDOR) {
-        setError('Esta cuenta no tiene permisos de vendedor')
-        return
-      }
-
-      // Redirigir al dashboard de vendedor
-      window.location.href = '/vendor'
     } catch (error) {
       console.error('Error en el login:', error)
       setError('Ocurrió un error al iniciar sesión')
@@ -131,25 +103,5 @@ function LoginForm() {
         </form>
       </div>
     </div>
-  )
-}
-
-export default function VendorLoginPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-          <div className="w-full max-w-md space-y-8">
-            <div>
-              <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-                Cargando...
-              </h2>
-            </div>
-          </div>
-        </div>
-      }
-    >
-      <LoginForm />
-    </Suspense>
   )
 } 

@@ -75,6 +75,27 @@ export const authOptions: NextAuthOptions = {
       }
     },
     async redirect({ url, baseUrl }) {
+      // Si la URL es /vendor, verificar que el usuario sea vendedor
+      if (url.startsWith('/vendor')) {
+        const session = await prisma.session.findFirst({
+          where: {
+            expires: {
+              gt: new Date(),
+            },
+          },
+          include: {
+            user: true,
+          },
+          orderBy: {
+            expires: 'desc',
+          },
+        })
+
+        if (!session || session.user.role !== Role.VENDOR) {
+          return '/auth/vendor/login?error=AccessDenied'
+        }
+      }
+
       // Si la URL es relativa, la convertimos en absoluta
       if (url.startsWith('/')) {
         return `${baseUrl}${url}`
