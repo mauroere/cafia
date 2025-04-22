@@ -11,7 +11,7 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 días
   },
   pages: {
-    signIn: '/auth/login',
+    signIn: '/auth/vendor/login',
     error: '/auth/error',
   },
   providers: [
@@ -45,10 +45,6 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Invalid password')
         }
 
-        if (credentials.callbackUrl?.includes('/vendor') && user.role !== Role.VENDOR) {
-          throw new Error('Access denied')
-        }
-
         return {
           id: user.id,
           email: user.email,
@@ -80,6 +76,14 @@ export const authOptions: NextAuthOptions = {
       }
     },
     async redirect({ url, baseUrl }) {
+      // Si la URL es /vendor, verificar que el usuario tenga el rol correcto
+      if (url.startsWith('/vendor')) {
+        const token = await getToken({ req: { headers: { cookie: document.cookie } } })
+        if (!token || token.role !== Role.VENDOR) {
+          return '/auth/vendor/login?error=AccessDenied'
+        }
+      }
+
       // Si la URL es relativa, la convertimos en absoluta
       if (url.startsWith('/')) {
         return `${baseUrl}${url}`

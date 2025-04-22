@@ -2,10 +2,13 @@
 
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 export default function VendorLoginPage() {
-  const [error, setError] = useState('')
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [error, setError] = useState(searchParams.get('error') === 'AccessDenied' ? 'Acceso denegado. Solo vendedores pueden acceder.' : '')
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -22,20 +25,26 @@ export default function VendorLoginPage() {
         email,
         password,
         redirect: false,
-        callbackUrl: '/vendor'
       })
 
       if (result?.error) {
-        if (result.error === 'Access denied') {
-          setError('Esta cuenta no tiene permisos de vendedor')
-        } else {
-          setError('Credenciales inválidas')
+        switch (result.error) {
+          case 'Invalid credentials':
+          case 'User not found':
+          case 'Invalid password':
+            setError('Credenciales inválidas')
+            break
+          case 'AccessDenied':
+            setError('Esta cuenta no tiene permisos de vendedor')
+            break
+          default:
+            setError('Ocurrió un error al iniciar sesión')
         }
         return
       }
 
       // Si el login fue exitoso, redirigir
-      window.location.href = '/vendor'
+      router.push('/vendor')
     } catch (error) {
       console.error('Error en el login:', error)
       setError('Ocurrió un error al iniciar sesión')
