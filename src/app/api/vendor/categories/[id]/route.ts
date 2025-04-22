@@ -28,7 +28,11 @@ export async function GET(
         id: params.id,
       },
       include: {
-        business: true,
+        business: {
+          include: {
+            owner: true
+          }
+        },
       },
     })
 
@@ -37,7 +41,7 @@ export async function GET(
     }
 
     // Verificar que el usuario es dueño del negocio
-    if (category.business.ownerId !== session.user.id) {
+    if (category.business.owner.id !== session.user.id) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
@@ -69,7 +73,11 @@ export async function PATCH(
         id: params.id,
       },
       include: {
-        business: true,
+        business: {
+          include: {
+            owner: true
+          }
+        },
       },
     })
 
@@ -78,7 +86,7 @@ export async function PATCH(
     }
 
     // Verificar que el usuario es dueño del negocio
-    if (category.business.ownerId !== session.user.id) {
+    if (category.business.owner.id !== session.user.id) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
@@ -121,7 +129,11 @@ export async function DELETE(
         id: params.id,
       },
       include: {
-        business: true,
+        business: {
+          include: {
+            owner: true
+          }
+        },
       },
     })
 
@@ -130,7 +142,7 @@ export async function DELETE(
     }
 
     // Verificar que el usuario es dueño del negocio
-    if (category.business.ownerId !== session.user.id) {
+    if (category.business.owner.id !== session.user.id) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
