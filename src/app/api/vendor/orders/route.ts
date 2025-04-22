@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 
 export async function GET(request: Request) {
   try {
@@ -16,8 +17,7 @@ export async function GET(request: Request) {
 
     // Obtener el negocio del vendedor
     const business = await prisma.business.findUnique({
-      where: { ownerId: session.user.id },
-      select: { id: true }
+      where: { ownerId: session.user.id }
     })
 
     if (!business) {
@@ -29,13 +29,17 @@ export async function GET(request: Request) {
 
     // Obtener parámetros de la URL
     const { searchParams } = new URL(request.url)
-    const limit = parseInt(searchParams.get('limit') || '10')
     const status = searchParams.get('status')
+    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 10
 
     // Construir la consulta
-    const where = {
-      businessId: business.id,
-      ...(status ? { status: status } : {})
+    const where: Prisma.OrderWhereInput = {
+      businessId: business.id
+    }
+
+    // Agregar filtro de estado si se proporciona
+    if (status) {
+      where.status = status as Prisma.OrderStatus
     }
 
     // Obtener pedidos recientes
@@ -45,31 +49,27 @@ export async function GET(request: Request) {
         createdAt: 'desc'
       },
       take: limit,
-      select: {
-        id: true,
-        shortId: true,
-        status: true,
-        totalAmount: true,
-        createdAt: true,
+      include: {
         customer: {
           select: {
-            name: true
+            name: true,
+            email: true
+          }
+        },
+        items: {
+          include: {
+            product: {
+              select: {
+                name: true,
+                price: true
+              }
+            }
           }
         }
       }
     })
 
-    // Formatear los resultados
-    const formattedOrders = orders.map(order => ({
-      id: order.id,
-      shortId: order.shortId,
-      status: order.status,
-      totalAmount: order.totalAmount,
-      createdAt: order.createdAt,
-      customerName: order.customer.name || 'Cliente'
-    }))
-
-    return NextResponse.json(formattedOrders)
+    return NextResponse.json(orders)
   } catch (error) {
     console.error('Error al obtener pedidos:', error)
     return NextResponse.json(
@@ -77,4 +77,5 @@ export async function GET(request: Request) {
       { status: 500 }
     )
   }
+} 
 } 
