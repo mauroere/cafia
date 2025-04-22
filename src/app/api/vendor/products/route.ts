@@ -115,13 +115,11 @@ export async function POST(request: Request) {
       business: {
         connect: { id: business.id }
       },
+      category: validatedData.categoryId 
+        ? { connect: { id: validatedData.categoryId } }
+        : { connect: null },
       ...(validatedData.description && { description: validatedData.description }),
       ...(validatedData.imageUrl && { imageUrl: validatedData.imageUrl }),
-      ...(validatedData.categoryId && {
-        category: {
-          connect: { id: validatedData.categoryId }
-        }
-      }),
       ...(validatedData.preparationTime && { preparationTime: validatedData.preparationTime }),
       ...(validatedData.allergens && { allergens: validatedData.allergens }),
       ...(validatedData.nutritionalInfo && { nutritionalInfo: validatedData.nutritionalInfo })
