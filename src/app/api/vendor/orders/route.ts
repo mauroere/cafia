@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { Prisma } from '@prisma/client'
+import { Prisma, OrderStatus } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,7 +39,7 @@ export async function GET(request: Request) {
     }
 
     if (status) {
-      where.status = status as Prisma.OrderStatus
+      where.status = status as OrderStatus
     }
 
     const orders = await prisma.order.findMany({
