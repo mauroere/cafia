@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Role } from '@prisma/client'
 
-export default function VendorLoginPage() {
+function LoginForm() {
   const router = useRouter()
   const { data: session, status } = useSession()
   const [error, setError] = useState('')
@@ -150,4 +150,8 @@ export default function VendorLoginPage() {
       </div>
     </div>
   )
+}
+
+export default function VendorLoginPage() {
+  return <LoginForm />
 } 
