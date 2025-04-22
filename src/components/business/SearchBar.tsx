@@ -1,8 +1,26 @@
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useDebounce } from '@/hooks/useDebounce'
 
 export default function SearchBar() {
-  const [search, setSearch] = useState('')
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [search, setSearch] = useState(searchParams.get('search') || '')
+  const debouncedSearch = useDebounce(search, 500)
+
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString())
+    
+    if (debouncedSearch) {
+      params.set('search', debouncedSearch)
+    } else {
+      params.delete('search')
+    }
+    
+    // Mantener otros filtros existentes
+    router.push(`/businesses?${params.toString()}`)
+  }, [debouncedSearch, router, searchParams])
 
   return (
     <div className="relative">
