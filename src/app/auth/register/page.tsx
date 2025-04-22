@@ -43,28 +43,17 @@ export default function RegisterPage() {
       const signInResult = await signIn('credentials', {
         email: data.email,
         password: data.password,
-        redirect: false,
+        callbackUrl: data.role === Role.VENDOR ? '/vendor' : '/orders',
       })
 
       if (signInResult?.error) {
-        throw new Error('Error al iniciar sesión')
+        throw new Error('Error al iniciar sesión automáticamente')
       }
 
-      // 3. Redirigir según el rol
-      if (data.role === Role.VENDOR) {
-        router.push('/vendor')
-      } else if (data.role === Role.CUSTOMER) {
-        router.push('/orders')
-      } else {
-        router.push('/')
-      }
-
-      // 4. Refrescar la página para actualizar el estado de la sesión
-      router.refresh()
+      // La redirección la manejará NextAuth automáticamente
     } catch (error) {
       console.error('Error en el proceso de registro:', error)
       setError(error instanceof Error ? error.message : 'Error al registrarse')
-    } finally {
       setLoading(false)
     }
   }

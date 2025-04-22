@@ -7,6 +7,7 @@ import { Role } from '@prisma/client'
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 días
   },
   pages: {
     signIn: '/auth/login',
@@ -73,6 +74,18 @@ export const authOptions: NextAuthOptions = {
         },
       }
     },
+    async redirect({ url, baseUrl }) {
+      // Si la URL es relativa, la convertimos en absoluta
+      if (url.startsWith('/')) {
+        return `${baseUrl}${url}`
+      }
+      // Si la URL ya es absoluta y pertenece al mismo dominio, la permitimos
+      else if (url.startsWith(baseUrl)) {
+        return url
+      }
+      // Por defecto, redirigimos a la página principal
+      return baseUrl
+    }
   },
 }
 
