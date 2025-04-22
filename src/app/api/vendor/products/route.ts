@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { Prisma } from '@prisma/client'
 
 // Esquema de validación para crear/actualizar productos
 const productSchema = z.object({
@@ -53,7 +54,7 @@ export async function GET(request: Request) {
                         searchParams.get('isAvailable') === 'false' ? false : undefined
 
     // Construir la consulta
-    const where = {
+    const where: Prisma.ProductWhereInput = {
       businessId: business.id,
       ...(categoryId ? { categoryId } : {}),
       ...(isAvailable !== undefined ? { isAvailable } : {})
@@ -106,12 +107,29 @@ export async function POST(request: Request) {
     const body = await request.json()
     const validatedData = productSchema.parse(body)
 
+    // Preparar los datos para la creación
+    const productData: Prisma.ProductCreateInput = {
+      name: validatedData.name,
+      price: validatedData.price,
+      isAvailable: validatedData.isAvailable,
+      business: {
+        connect: { id: business.id }
+      },
+      ...(validatedData.description && { description: validatedData.description }),
+      ...(validatedData.imageUrl && { imageUrl: validatedData.imageUrl }),
+      ...(validatedData.categoryId && {
+        category: {
+          connect: { id: validatedData.categoryId }
+        }
+      }),
+      ...(validatedData.preparationTime && { preparationTime: validatedData.preparationTime }),
+      ...(validatedData.allergens && { allergens: validatedData.allergens }),
+      ...(validatedData.nutritionalInfo && { nutritionalInfo: validatedData.nutritionalInfo })
+    }
+
     // Crear el producto
     const product = await prisma.product.create({
-      data: {
-        ...validatedData,
-        businessId: business.id
-      },
+      data: productData,
       include: {
         category: true
       }
