@@ -117,18 +117,14 @@ export async function POST(request: Request) {
       business: {
         connect: { id: business.id }
       },
+      category: validatedData.categoryId 
+        ? { connect: { id: validatedData.categoryId } }
+        : { connect: { id: 'default-category-id' } }, // Asegúrate de tener una categoría por defecto
       ...(validatedData.description && { description: validatedData.description }),
       ...(validatedData.imageUrl && { imageUrl: validatedData.imageUrl }),
       ...(validatedData.preparationTime && { preparationTime: validatedData.preparationTime }),
       ...(validatedData.allergens && { allergens: validatedData.allergens }),
       ...(validatedData.nutritionalInfo && { nutritionalInfo: validatedData.nutritionalInfo })
-    }
-
-    // Agregar la categoría si existe
-    if (validatedData.categoryId) {
-      productData.category = {
-        connect: { id: validatedData.categoryId }
-      }
     }
 
     // Crear el producto
