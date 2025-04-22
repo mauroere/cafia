@@ -1,3 +1,5 @@
+'use client'
+
 import { Card } from '@/components/ui/Card'
 import { StarIcon } from '@heroicons/react/24/solid'
 import Image from 'next/image'
