@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @layer components {
   .landing-hero {
     @apply relative isolate overflow-hidden bg-gradient-to-b from-primary-100/20;
