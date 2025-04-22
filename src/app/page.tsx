@@ -11,7 +11,7 @@ import {
 } from '@heroicons/react/24/outline'
 import Stats from '@/components/landing/Stats'
 import Testimonials from '@/components/landing/Testimonials'
-import DashboardPreview from '@/components/landing/DashboardPreview'
+import { DashboardPreview } from '@/components/landing/DashboardPreview'
 import Features from '@/components/landing/Features'
 import CTA from '@/components/landing/CTA'
 
