@@ -6,6 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import { useSearchParams } from 'next/navigation'
 
 type Business = {
   id: string
@@ -31,12 +32,13 @@ export default function BusinessGrid() {
   const [pagination, setPagination] = useState<Pagination | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     const fetchBusinesses = async () => {
       try {
         setLoading(true)
-        const response = await axios.get('/api/businesses')
+        const response = await axios.get(`/api/businesses?${searchParams.toString()}`)
         setBusinesses(response.data.businesses)
         setPagination(response.data.pagination)
         setError(null)
@@ -49,7 +51,7 @@ export default function BusinessGrid() {
     }
 
     fetchBusinesses()
-  }, [])
+  }, [searchParams])
 
   if (loading) {
     return (
