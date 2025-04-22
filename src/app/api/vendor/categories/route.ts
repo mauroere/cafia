@@ -31,12 +31,18 @@ export async function GET(request: Request) {
     const business = await prisma.business.findUnique({
       where: {
         id: businessId,
-        userId: session.user.id,
       },
+      include: {
+        owner: true
+      }
     })
 
     if (!business) {
       return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 })
+    }
+
+    if (business.owner.id !== session.user.id) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
     const categories = await prisma.category.findMany({
@@ -79,12 +85,18 @@ export async function POST(request: Request) {
     const business = await prisma.business.findUnique({
       where: {
         id: businessId,
-        userId: session.user.id,
       },
+      include: {
+        owner: true
+      }
     })
 
     if (!business) {
       return NextResponse.json({ error: 'Negocio no encontrado' }, { status: 404 })
+    }
+
+    if (business.owner.id !== session.user.id) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
     const category = await prisma.category.create({
