@@ -23,6 +23,8 @@ const productSchema = z.object({
   }).optional(),
 })
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions)
@@ -115,9 +117,11 @@ export async function POST(request: Request) {
       business: {
         connect: { id: business.id }
       },
-      category: validatedData.categoryId 
-        ? { connect: { id: validatedData.categoryId } }
-        : { connect: undefined },
+      ...(validatedData.categoryId && {
+        category: {
+          connect: { id: validatedData.categoryId }
+        }
+      }),
       ...(validatedData.description && { description: validatedData.description }),
       ...(validatedData.imageUrl && { imageUrl: validatedData.imageUrl }),
       ...(validatedData.preparationTime && { preparationTime: validatedData.preparationTime }),

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { Prisma } from '@prisma/client'
 
 // Esquema de validación para la actualización del estado
 const updateStatusSchema = z.object({
@@ -12,6 +13,8 @@ const updateStatusSchema = z.object({
   estimatedPrepTime: z.number().min(5).max(120).optional(),
   deliveryFee: z.number().min(0).max(100).optional()
 })
+
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
@@ -81,10 +84,19 @@ export async function PATCH(request: Request) {
     const body = await request.json()
     const validatedData = updateStatusSchema.parse(body)
 
+    // Preparar los datos para la actualización
+    const updateData: Prisma.BusinessUpdateInput = {
+      ...(validatedData.isOpen !== undefined && { isOpen: validatedData.isOpen }),
+      ...(validatedData.enableDelivery !== undefined && { enableDelivery: validatedData.enableDelivery }),
+      ...(validatedData.enableTakeaway !== undefined && { enableTakeaway: validatedData.enableTakeaway }),
+      ...(validatedData.estimatedPrepTime && { estimatedPrepTime: validatedData.estimatedPrepTime }),
+      ...(validatedData.deliveryFee && { deliveryFee: validatedData.deliveryFee })
+    }
+
     // Actualizar el estado del negocio
     const updatedBusiness = await prisma.business.update({
       where: { id: business.id },
-      data: validatedData,
+      data: updateData,
       select: {
         isOpen: true,
         enableDelivery: true,
