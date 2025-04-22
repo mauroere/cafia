@@ -48,7 +48,7 @@ export async function GET(request: Request) {
       prisma.order.findMany({
         where,
         include: {
-          user: {
+          customer: {
             select: {
               name: true,
               email: true,
