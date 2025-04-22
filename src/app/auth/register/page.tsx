@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Role } from '@/types/database'
 import { signIn } from 'next-auth/react'
@@ -10,6 +10,13 @@ export default function RegisterPage() {
   const router = useRouter()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Si hay parámetros en la URL, redirigir a la página limpia
+  const searchParams = useSearchParams()
+  if (searchParams.has('role')) {
+    router.replace('/auth/register')
+    return null
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -129,6 +136,7 @@ export default function RegisterPage() {
                 id="role"
                 name="role"
                 required
+                defaultValue={Role.CUSTOMER}
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
               >
                 <option value={Role.CUSTOMER}>Cliente</option>
