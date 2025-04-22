@@ -51,8 +51,7 @@ export async function GET(request: Request) {
           customer: {
             select: {
               name: true,
-              email: true,
-              phone: true
+              email: true
             }
           },
           items: {
