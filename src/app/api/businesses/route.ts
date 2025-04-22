@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { Prisma } from '@prisma/client'
 
 // Esquema de validación para los parámetros de búsqueda
 const searchParamsSchema = z.object({
@@ -21,18 +22,18 @@ export async function GET(request: Request) {
     const validatedParams = searchParamsSchema.parse(Object.fromEntries(searchParams))
     
     // Construir la consulta
-    const where = {
+    const where: Prisma.BusinessWhereInput = {
       isActive: true,
       ...(validatedParams.search && {
         OR: [
-          { name: { contains: validatedParams.search, mode: 'insensitive' } },
-          { description: { contains: validatedParams.search, mode: 'insensitive' } },
+          { name: { contains: validatedParams.search, mode: Prisma.QueryMode.insensitive } },
+          { description: { contains: validatedParams.search, mode: Prisma.QueryMode.insensitive } },
         ],
       }),
       ...(validatedParams.category && {
         categories: {
           some: {
-            name: { equals: validatedParams.category, mode: 'insensitive' }
+            name: { equals: validatedParams.category, mode: Prisma.QueryMode.insensitive }
           }
         }
       }),
