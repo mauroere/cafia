@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { Prisma, OrderStatus } from '@prisma/client'
+import { OrderStatus } from '@prisma/client'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   try {
@@ -17,7 +19,8 @@ export async function GET(request: Request) {
 
     // Obtener el negocio del vendedor
     const business = await prisma.business.findUnique({
-      where: { ownerId: session.user.id }
+      where: { ownerId: session.user.id },
+      select: { id: true }
     })
 
     if (!business) {
@@ -27,49 +30,55 @@ export async function GET(request: Request) {
       )
     }
 
-    // Obtener parámetros de la URL
+    // Obtener parámetros de búsqueda
     const { searchParams } = new URL(request.url)
-    const status = searchParams.get('status')
-    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 10
+    const status = searchParams.get('status') as OrderStatus | null
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '10')
+    const skip = (page - 1) * limit
 
     // Construir la consulta
-    const where: Prisma.OrderWhereInput = {
-      businessId: business.id
+    const where = {
+      businessId: business.id,
+      ...(status && { status })
     }
 
-    // Agregar filtro de estado si se proporciona
-    if (status) {
-      where.status = status as OrderStatus
-    }
-
-    // Obtener pedidos recientes
-    const orders = await prisma.order.findMany({
-      where,
-      orderBy: {
-        createdAt: 'desc'
-      },
-      take: limit,
-      include: {
-        customer: {
-          select: {
-            name: true,
-            email: true
-          }
-        },
-        items: {
-          include: {
-            product: {
-              select: {
-                name: true,
-                price: true
-              }
+    // Obtener pedidos
+    const [orders, total] = await Promise.all([
+      prisma.order.findMany({
+        where,
+        include: {
+          user: {
+            select: {
+              name: true,
+              email: true,
+              phone: true
+            }
+          },
+          items: {
+            include: {
+              product: true
             }
           }
-        }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        skip,
+        take: limit
+      }),
+      prisma.order.count({ where })
+    ])
+
+    return NextResponse.json({
+      orders,
+      pagination: {
+        total,
+        pages: Math.ceil(total / limit),
+        currentPage: page,
+        limit
       }
     })
-
-    return NextResponse.json(orders)
   } catch (error) {
     console.error('Error al obtener pedidos:', error)
     return NextResponse.json(

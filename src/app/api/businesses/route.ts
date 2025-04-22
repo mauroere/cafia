@@ -1,61 +1,50 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
-import { Prisma } from '@prisma/client'
 
 // Esquema de validación para los parámetros de búsqueda
 const searchParamsSchema = z.object({
-  page: z.coerce.number().min(1).default(1),
-  limit: z.coerce.number().min(1).max(50).default(10),
   search: z.string().optional(),
-  categoryId: z.string().optional(),
-  enableTakeaway: z.coerce.boolean().optional(),
-  enableDelivery: z.coerce.boolean().optional(),
+  category: z.string().optional(),
+  delivery: z.string().optional(),
+  price: z.string().optional(),
+  page: z.string().optional().transform(val => val ? parseInt(val) : 1),
+  limit: z.string().optional().transform(val => val ? parseInt(val) : 10),
 })
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   try {
-    // Obtener y validar parámetros de la URL
+    // Obtener y validar los parámetros de búsqueda
     const { searchParams } = new URL(request.url)
     const validatedParams = searchParamsSchema.parse(Object.fromEntries(searchParams))
-
-    // Construir la consulta de búsqueda
-    const where: Prisma.BusinessWhereInput = {
+    
+    // Construir la consulta
+    const where = {
       isActive: true,
-    }
-
-    // Agregar filtros opcionales
-    if (validatedParams.search) {
-      const searchTerm = validatedParams.search.toLowerCase()
-      where.OR = [
-        { name: { contains: searchTerm, mode: Prisma.QueryMode.insensitive } },
-        { description: { contains: searchTerm, mode: Prisma.QueryMode.insensitive } },
-      ]
-    }
-
-    if (validatedParams.categoryId) {
-      where.categories = {
-        some: {
-          id: validatedParams.categoryId
+      ...(validatedParams.search && {
+        OR: [
+          { name: { contains: validatedParams.search, mode: 'insensitive' } },
+          { description: { contains: validatedParams.search, mode: 'insensitive' } },
+        ],
+      }),
+      ...(validatedParams.category && {
+        categories: {
+          some: {
+            name: { equals: validatedParams.category, mode: 'insensitive' }
+          }
         }
-      }
+      }),
     }
 
-    if (validatedParams.enableTakeaway !== undefined) {
-      where.enableTakeaway = validatedParams.enableTakeaway
-    }
-
-    if (validatedParams.enableDelivery !== undefined) {
-      where.enableDelivery = validatedParams.enableDelivery
-    }
-
-    // Obtener negocios y total
+    // Obtener negocios
     const [businesses, total] = await Promise.all([
       prisma.business.findMany({
         where,
-        take: validatedParams.limit,
         skip: (validatedParams.page - 1) * validatedParams.limit,
-        orderBy: { createdAt: 'desc' },
+        take: validatedParams.limit,
+        orderBy: { name: 'asc' },
         include: {
           categories: true,
           _count: {
@@ -66,17 +55,24 @@ export async function GET(request: Request) {
       prisma.business.count({ where })
     ])
 
-    // Calcular paginación
-    const totalPages = Math.ceil(total / validatedParams.limit)
+    // Formatear la respuesta
+    const formattedBusinesses = businesses.map(business => ({
+      id: business.id,
+      name: business.name,
+      description: business.description,
+      logoUrl: business.logoUrl || '/images/default-business.jpg',
+      slug: business.slug,
+      deliveryTime: business.deliveryTime || '30-45 min',
+      deliveryFee: business.deliveryFee || 5,
+      categories: business.categories.map(cat => cat.name),
+      orderCount: business._count.orders
+    }))
 
     return NextResponse.json({
-      businesses: businesses.map(business => ({
-        ...business,
-        orderCount: business._count.orders
-      })),
+      businesses: formattedBusinesses,
       pagination: {
         total,
-        pages: totalPages,
+        pages: Math.ceil(total / validatedParams.limit),
         currentPage: validatedParams.page,
         limit: validatedParams.limit
       }

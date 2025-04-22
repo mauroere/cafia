@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
@@ -27,83 +29,63 @@ export async function GET() {
       )
     }
 
-    // Obtener la fecha de inicio del día actual
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-
-    // Obtener ventas del día
-    const todayOrders = await prisma.order.findMany({
-      where: {
-        businessId: business.id,
-        createdAt: {
-          gte: today
+    // Obtener estadísticas
+    const [
+      totalOrders,
+      totalRevenue,
+      pendingOrders,
+      completedOrders,
+      totalProducts,
+      activeProducts
+    ] = await Promise.all([
+      // Total de pedidos
+      prisma.order.count({
+        where: { businessId: business.id }
+      }),
+      // Ingresos totales
+      prisma.order.aggregate({
+        where: { 
+          businessId: business.id,
+          status: 'COMPLETED'
         },
-        status: {
-          in: ['DELIVERED', 'PICKED_UP']
+        _sum: {
+          total: true
         }
-      },
-      select: {
-        totalAmount: true
-      }
-    })
-
-    // Calcular ventas totales del día
-    const todaySales = todayOrders.reduce((sum, order) => sum + order.totalAmount, 0)
-
-    // Obtener pedidos pendientes
-    const pendingOrders = await prisma.order.count({
-      where: {
-        businessId: business.id,
-        status: {
-          in: ['PENDING', 'CONFIRMED', 'PREPARING', 'READY_FOR_PICKUP', 'OUT_FOR_DELIVERY']
+      }),
+      // Pedidos pendientes
+      prisma.order.count({
+        where: { 
+          businessId: business.id,
+          status: 'PENDING'
         }
-      }
-    })
-
-    // Obtener tiempo promedio de preparación
-    const completedOrders = await prisma.order.findMany({
-      where: {
-        businessId: business.id,
-        status: {
-          in: ['DELIVERED', 'PICKED_UP']
-        },
-        createdAt: {
-          gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Últimos 7 días
+      }),
+      // Pedidos completados
+      prisma.order.count({
+        where: { 
+          businessId: business.id,
+          status: 'COMPLETED'
         }
-      },
-      select: {
-        createdAt: true,
-        updatedAt: true
-      }
-    })
-
-    // Calcular tiempo promedio (en minutos)
-    const avgPrepTime = completedOrders.length > 0
-      ? Math.round(completedOrders.reduce((sum, order) => {
-          const prepTime = (order.updatedAt.getTime() - order.createdAt.getTime()) / (1000 * 60)
-          return sum + prepTime
-        }, 0) / completedOrders.length)
-      : 0
-
-    // Obtener nuevos clientes (últimos 7 días)
-    const newCustomers = await prisma.user.count({
-      where: {
-        orders: {
-          some: {
-            businessId: business.id,
-            createdAt: {
-              gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-            }
-          }
+      }),
+      // Total de productos
+      prisma.product.count({
+        where: { businessId: business.id }
+      }),
+      // Productos activos
+      prisma.product.count({
+        where: { 
+          businessId: business.id,
+          isAvailable: true
         }
-      }
-    })
+      })
+    ])
 
     return NextResponse.json({
-      todaySales,
+      totalOrders,
+      totalRevenue: totalRevenue._sum.total || 0,
       pendingOrders,
-      avgPrepTime,
-      newCustomers
+      completedOrders,
+      totalProducts,
+      activeProducts
     })
   } catch (error) {
     console.error('Error al obtener estadísticas:', error)
