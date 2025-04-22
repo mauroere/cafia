@@ -47,7 +47,7 @@ export async function GET() {
       prisma.order.aggregate({
         where: { 
           businessId: business.id,
-          status: OrderStatus.COMPLETED
+          status: OrderStatus.DELIVERED
         },
         _sum: {
           total: true
@@ -64,7 +64,9 @@ export async function GET() {
       prisma.order.count({
         where: { 
           businessId: business.id,
-          status: OrderStatus.COMPLETED
+          status: {
+            in: [OrderStatus.DELIVERED, OrderStatus.PICKED_UP]
+          }
         }
       }),
       // Total de productos
