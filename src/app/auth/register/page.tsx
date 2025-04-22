@@ -25,7 +25,8 @@ export default function RegisterPage() {
     }
 
     try {
-      const response = await fetch('/api/auth/register', {
+      // 1. Registrar usuario
+      const registerResponse = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -33,41 +34,35 @@ export default function RegisterPage() {
         body: JSON.stringify(data),
       })
 
-      if (!response.ok) {
-        const error = await response.json()
+      if (!registerResponse.ok) {
+        const error = await registerResponse.json()
         throw new Error(error.message || 'Error al registrarse')
       }
 
-      // Iniciar sesión automáticamente después del registro
-      const result = await signIn('credentials', {
+      // 2. Iniciar sesión
+      const signInResult = await signIn('credentials', {
         email: data.email,
         password: data.password,
         redirect: false,
       })
 
-      if (result?.error) {
+      if (signInResult?.error) {
         throw new Error('Error al iniciar sesión')
       }
 
-      // Obtener el rol del usuario y redirigir según corresponda
-      const userResponse = await fetch('/api/auth/me')
-      const userData = await userResponse.json()
-
-      switch (userData.role) {
-        case Role.ADMIN:
-          router.push('/admin')
-          break
-        case Role.VENDOR:
-          router.push('/vendor')
-          break
-        case Role.CUSTOMER:
-          router.push('/orders')
-          break
-        default:
-          router.push('/')
+      // 3. Redirigir según el rol
+      if (data.role === Role.VENDOR) {
+        router.push('/vendor')
+      } else if (data.role === Role.CUSTOMER) {
+        router.push('/orders')
+      } else {
+        router.push('/')
       }
+
+      // 4. Refrescar la página para actualizar el estado de la sesión
       router.refresh()
     } catch (error) {
+      console.error('Error en el proceso de registro:', error)
       setError(error instanceof Error ? error.message : 'Error al registrarse')
     } finally {
       setLoading(false)
