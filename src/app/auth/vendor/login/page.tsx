@@ -6,18 +6,28 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Role } from '@prisma/client'
 
-function LoginForm() {
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+export default function VendorLoginPage() {
   const router = useRouter()
-  const { data: session, status } = useSession()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [isClient, setIsClient] = useState(false)
 
-  // Redirigir si ya está autenticado
   useEffect(() => {
-    if (status === 'authenticated' && session?.user?.role === Role.VENDOR) {
-      router.push('/vendor')
+    setIsClient(true)
+  }, [])
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const session = await fetch('/api/auth/session').then(res => res.json())
+      if (session?.user?.role === Role.VENDOR) {
+        router.push('/vendor')
+      }
     }
-  }, [status, session, router])
+    checkSession()
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -64,7 +74,7 @@ function LoginForm() {
     }
   }
 
-  if (status === 'loading') {
+  if (!isClient) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
         <div className="w-full max-w-md space-y-8">
@@ -150,8 +160,4 @@ function LoginForm() {
       </div>
     </div>
   )
-}
-
-export default function VendorLoginPage() {
-  return <LoginForm />
 } 
