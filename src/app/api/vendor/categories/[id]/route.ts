@@ -37,7 +37,7 @@ export async function GET(
     }
 
     // Verificar que el usuario es dueño del negocio
-    if (category.business.userId !== session.user.id) {
+    if (category.business.ownerId !== session.user.id) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
@@ -78,7 +78,7 @@ export async function PATCH(
     }
 
     // Verificar que el usuario es dueño del negocio
-    if (category.business.userId !== session.user.id) {
+    if (category.business.ownerId !== session.user.id) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
@@ -130,7 +130,7 @@ export async function DELETE(
     }
 
     // Verificar que el usuario es dueño del negocio
-    if (category.business.userId !== session.user.id) {
+    if (category.business.ownerId !== session.user.id) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
