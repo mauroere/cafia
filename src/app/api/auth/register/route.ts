@@ -1,64 +1,73 @@
 import { NextResponse } from 'next/server'
 import { hash } from 'bcryptjs'
-import { prisma } from '@/lib/prisma'
-import { Role } from '@/types/database'
+import { z } from 'zod'
+import prisma from '@/lib/prisma'
+import { Prisma, Role } from '@prisma/client'
 
-export async function POST(req: Request) {
+export const dynamic = 'force-dynamic'
+
+const registerSchema = z.object({
+  name: z.string().min(1, 'El nombre es requerido'),
+  email: z.string().email('Email inválido'),
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+  role: z.nativeEnum(Role)
+})
+
+type RegisterInput = z.infer<typeof registerSchema>
+
+export async function POST(request: Request) {
   try {
-    const { name, email, password, role } = await req.json()
+    const body = await request.json()
+    const validatedData: RegisterInput = registerSchema.parse(body)
 
-    // Validate input
-    if (!name || !email || !password || !role) {
-      return NextResponse.json(
-        { message: 'Todos los campos son requeridos' },
-        { status: 400 }
-      )
-    }
-
-    // Validate role
-    if (!Object.values(Role).includes(role)) {
-      return NextResponse.json(
-        { message: 'Rol inválido' },
-        { status: 400 }
-      )
-    }
-
-    // Check if user already exists
+    // Verificar si el usuario ya existe
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email: validatedData.email }
     })
 
     if (existingUser) {
       return NextResponse.json(
-        { message: 'El email ya está registrado' },
+        { error: 'El email ya está registrado' },
         { status: 400 }
       )
     }
 
-    // Hash password
-    const hashedPassword = await hash(password, 12)
+    // Crear el usuario
+    const hashedPassword = await hash(validatedData.password, 12)
+    
+    const userData: Prisma.UserCreateInput = {
+      name: validatedData.name,
+      email: validatedData.email,
+      password: hashedPassword,
+      role: validatedData.role
+    }
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role,
-      },
+    await prisma.user.create({
+      data: userData,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true
+      }
     })
 
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = user
-
     return NextResponse.json(
-      { message: 'Usuario creado exitosamente', user: userWithoutPassword },
+      { message: 'Usuario registrado exitosamente' },
       { status: 201 }
     )
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: error.errors[0].message },
+        { status: 400 }
+      )
+    }
+
     console.error('Error en registro:', error)
     return NextResponse.json(
-      { message: 'Error al crear usuario' },
+      { error: 'Error al registrar usuario' },
       { status: 500 }
     )
   }
