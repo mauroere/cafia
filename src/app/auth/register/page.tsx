@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Role } from '@/types/database'
+import { signIn } from 'next-auth/react'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -37,7 +38,35 @@ export default function RegisterPage() {
         throw new Error(error.message || 'Error al registrarse')
       }
 
-      router.push('/auth/login?registered=true')
+      // Iniciar sesión automáticamente después del registro
+      const result = await signIn('credentials', {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      })
+
+      if (result?.error) {
+        throw new Error('Error al iniciar sesión')
+      }
+
+      // Obtener el rol del usuario y redirigir según corresponda
+      const userResponse = await fetch('/api/auth/me')
+      const userData = await userResponse.json()
+
+      switch (userData.role) {
+        case Role.ADMIN:
+          router.push('/admin')
+          break
+        case Role.VENDOR:
+          router.push('/vendor')
+          break
+        case Role.CUSTOMER:
+          router.push('/orders')
+          break
+        default:
+          router.push('/')
+      }
+      router.refresh()
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Error al registrarse')
     } finally {

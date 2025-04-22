@@ -1,12 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn } from 'next-auth/react'
+import { signIn, useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Role } from '@prisma/client'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { data: session } = useSession()
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -29,7 +31,24 @@ export default function LoginPage() {
       if (result?.error) {
         setError('Credenciales inválidas')
       } else {
-        router.push('/')
+        // Obtener el rol del usuario de la respuesta
+        const response = await fetch('/api/auth/me')
+        const userData = await response.json()
+        
+        // Redirigir según el rol
+        switch (userData.role) {
+          case Role.ADMIN:
+            router.push('/admin')
+            break
+          case Role.VENDOR:
+            router.push('/vendor')
+            break
+          case Role.CUSTOMER:
+            router.push('/orders')
+            break
+          default:
+            router.push('/')
+        }
         router.refresh()
       }
     } catch (error) {
