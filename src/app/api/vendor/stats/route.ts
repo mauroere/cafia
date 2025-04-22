@@ -50,7 +50,7 @@ export async function GET() {
           status: OrderStatus.DELIVERED
         },
         _sum: {
-          total: true
+          totalAmount: true
         }
       }),
       // Pedidos pendientes
@@ -84,7 +84,7 @@ export async function GET() {
 
     return NextResponse.json({
       totalOrders,
-      totalRevenue: totalRevenue._sum.total || 0,
+      totalRevenue: totalRevenue._sum.totalAmount || 0,
       pendingOrders,
       completedOrders,
       totalProducts,
