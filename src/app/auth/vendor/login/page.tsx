@@ -21,9 +21,21 @@ export default function VendorLoginPage() {
       const result = await signIn('credentials', {
         email,
         password,
-        redirect: true,
+        redirect: false,
         callbackUrl: '/vendor'
       })
+
+      if (result?.error) {
+        if (result.error === 'Access denied') {
+          setError('Esta cuenta no tiene permisos de vendedor')
+        } else {
+          setError('Credenciales inválidas')
+        }
+        return
+      }
+
+      // Si el login fue exitoso, redirigir
+      window.location.href = '/vendor'
     } catch (error) {
       console.error('Error en el login:', error)
       setError('Ocurrió un error al iniciar sesión')
