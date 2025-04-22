@@ -1,3 +1,5 @@
+'use client'
+
 import { Card } from '@/components/ui/Card'
 import { Switch } from '@/components/ui/Switch'
 import { useEffect, useState } from 'react'
