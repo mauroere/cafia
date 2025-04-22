@@ -23,7 +23,7 @@ export async function GET(request: Request) {
 
     const business = await prisma.business.findFirst({
       where: {
-        vendorId: session.user.id
+        ownerId: session.user.id
       }
     })
 
