@@ -6,10 +6,12 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 
 type Stats = {
-  todaySales: number
+  totalOrders: number
+  totalRevenue: number
   pendingOrders: number
-  avgPrepTime: number
-  newCustomers: number
+  completedOrders: number
+  totalProducts: number
+  activeProducts: number
 }
 
 export default function DashboardStats() {
@@ -75,9 +77,9 @@ export default function DashboardStats() {
             <CurrencyDollarIcon className="h-6 w-6 text-green-600" />
           </div>
           <div className="ml-4">
-            <p className="text-sm font-medium text-gray-500">Ventas Hoy</p>
+            <p className="text-sm font-medium text-gray-500">Ingresos Totales</p>
             <p className="text-2xl font-semibold">
-              ${stats?.todaySales.toFixed(2) || '0.00'}
+              ${stats?.totalRevenue.toFixed(2) || '0.00'}
             </p>
           </div>
         </div>
@@ -101,8 +103,8 @@ export default function DashboardStats() {
             <ClockIcon className="h-6 w-6 text-yellow-600" />
           </div>
           <div className="ml-4">
-            <p className="text-sm font-medium text-gray-500">Tiempo Promedio</p>
-            <p className="text-2xl font-semibold">{stats?.avgPrepTime || 0} min</p>
+            <p className="text-sm font-medium text-gray-500">Total Pedidos</p>
+            <p className="text-2xl font-semibold">{stats?.totalOrders || 0}</p>
           </div>
         </div>
       </Card>
@@ -113,8 +115,8 @@ export default function DashboardStats() {
             <UserGroupIcon className="h-6 w-6 text-purple-600" />
           </div>
           <div className="ml-4">
-            <p className="text-sm font-medium text-gray-500">Nuevos Clientes</p>
-            <p className="text-2xl font-semibold">{stats?.newCustomers || 0}</p>
+            <p className="text-sm font-medium text-gray-500">Productos Activos</p>
+            <p className="text-2xl font-semibold">{stats?.activeProducts || 0}</p>
           </div>
         </div>
       </Card>
