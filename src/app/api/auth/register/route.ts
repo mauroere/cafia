@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { hash } from 'bcryptjs'
 import { z } from 'zod'
-import prisma from '@/lib/prisma'
+import { prisma } from '@/lib/prisma'
 import { Prisma, Role } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
