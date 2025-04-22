@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { Prisma } from '@prisma/client'
 
 // Esquema de validación para los parámetros de búsqueda
 const searchParamsSchema = z.object({
+  page: z.coerce.number().min(1).default(1),
+  limit: z.coerce.number().min(1).max(50).default(10),
   search: z.string().optional(),
-  delivery: z.enum(['delivery', 'takeaway']).optional(),
-  price: z.enum(['low', 'medium', 'high']).optional(),
-  category: z.string().optional(),
-  limit: z.string().optional().transform(val => val ? parseInt(val) : 10),
-  page: z.string().optional().transform(val => val ? parseInt(val) : 1)
+  categoryId: z.string().optional(),
+  enableTakeaway: z.coerce.boolean().optional(),
+  enableDelivery: z.coerce.boolean().optional(),
 })
 
 export async function GET(request: Request) {
@@ -17,87 +18,70 @@ export async function GET(request: Request) {
     // Obtener y validar parámetros de la URL
     const { searchParams } = new URL(request.url)
     const validatedParams = searchParamsSchema.parse(Object.fromEntries(searchParams))
-    
-    // Construir la consulta
-    const where = {
+
+    // Construir la consulta de búsqueda
+    const where: Prisma.BusinessWhereInput = {
       isActive: true,
-      ...(validatedParams.search ? {
-        OR: [
-          { name: { contains: validatedParams.search, mode: 'insensitive' } },
-          { description: { contains: validatedParams.search, mode: 'insensitive' } }
-        ]
-      } : {}),
-      ...(validatedParams.delivery === 'delivery' ? { enableDelivery: true } : {}),
-      ...(validatedParams.delivery === 'takeaway' ? { enableTakeaway: true } : {}),
-      ...(validatedParams.category ? {
-        categories: {
-          some: {
-            name: { contains: validatedParams.category, mode: 'insensitive' }
-          }
-        }
-      } : {})
     }
 
-    // Obtener negocios con paginación
+    // Agregar filtros opcionales
+    if (validatedParams.search) {
+      const searchTerm = validatedParams.search.toLowerCase()
+      where.OR = [
+        { name: { contains: searchTerm, mode: Prisma.QueryMode.insensitive } },
+        { description: { contains: searchTerm, mode: Prisma.QueryMode.insensitive } },
+      ]
+    }
+
+    if (validatedParams.categoryId) {
+      where.categories = {
+        some: {
+          id: validatedParams.categoryId
+        }
+      }
+    }
+
+    if (validatedParams.enableTakeaway !== undefined) {
+      where.enableTakeaway = validatedParams.enableTakeaway
+    }
+
+    if (validatedParams.enableDelivery !== undefined) {
+      where.enableDelivery = validatedParams.enableDelivery
+    }
+
+    // Obtener negocios y total
     const [businesses, total] = await Promise.all([
       prisma.business.findMany({
         where,
         take: validatedParams.limit,
         skip: (validatedParams.page - 1) * validatedParams.limit,
         orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          logoUrl: true,
-          slug: true,
-          estimatedPrepTime: true,
-          deliveryFee: true,
-          categories: {
-            select: {
-              name: true
-            }
-          },
+        include: {
+          categories: true,
           _count: {
-            select: {
-              orders: true
-            }
+            select: { orders: true }
           }
         }
       }),
       prisma.business.count({ where })
     ])
 
-    // Formatear los resultados
-    const formattedBusinesses = businesses.map(business => ({
-      id: business.id,
-      name: business.name,
-      description: business.description,
-      logoUrl: business.logoUrl || '/placeholder.jpg',
-      slug: business.slug,
-      deliveryTime: `${business.estimatedPrepTime || 25} min`,
-      deliveryFee: business.deliveryFee,
-      categories: business.categories.map(cat => cat.name),
-      orderCount: business._count.orders
-    }))
+    // Calcular paginación
+    const totalPages = Math.ceil(total / validatedParams.limit)
 
     return NextResponse.json({
-      businesses: formattedBusinesses,
+      businesses: businesses.map(business => ({
+        ...business,
+        orderCount: business._count.orders
+      })),
       pagination: {
         total,
-        pages: Math.ceil(total / validatedParams.limit),
+        pages: totalPages,
         currentPage: validatedParams.page,
         limit: validatedParams.limit
       }
     })
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Parámetros inválidos', details: error.errors },
-        { status: 400 }
-      )
-    }
-
     console.error('Error al obtener negocios:', error)
     return NextResponse.json(
       { error: 'Error al obtener negocios' },
