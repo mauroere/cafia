@@ -24,7 +24,9 @@ export async function GET() {
         address: true,
         phone: true,
         whatsappNumber: true,
-        email: true
+        description: true,
+        isActive: true,
+        isOpen: true
       }
     })
 
