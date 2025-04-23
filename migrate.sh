@@ -12,10 +12,6 @@ npx prisma generate
 echo "Deploying database changes..."
 npx prisma db push --accept-data-loss
 
-# Verify database connection
-echo "Verifying database connection..."
-npx prisma db execute --file ./prisma/verify.sql
-
 echo "Migration completed successfully!"
 
 # Seed the database if needed

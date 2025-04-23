@@ -6,7 +6,7 @@ export const revalidate = 0
 
 export async function GET() {
   try {
-    // Verificar conexión a la base de datos
+    // Verificar conexión básica a la base de datos
     await prisma.$queryRaw`SELECT 1`
     
     return NextResponse.json(
