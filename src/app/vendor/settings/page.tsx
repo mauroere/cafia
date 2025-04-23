@@ -19,7 +19,12 @@ export default async function SettingsPage() {
       isActive: true,
       address: true,
       phone: true,
-      email: true
+      whatsappNumber: true,
+      isOpen: true,
+      enableDelivery: true,
+      enableTakeaway: true,
+      deliveryFee: true,
+      estimatedPrepTime: true
     }
   })
 
