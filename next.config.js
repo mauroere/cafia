@@ -1,12 +1,21 @@
+const path = require("path");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ["localhost", "railway.app"],
     remotePatterns: [
       {
         protocol: "https",
         hostname: "**",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+      },
+      {
+        protocol: "https",
+        hostname: "railway.app",
       },
     ],
   },
@@ -17,7 +26,7 @@ const nextConfig = {
   // Configuración para Railway
   output: "standalone",
   experimental: {
-    outputFileTracingRoot: undefined,
+    outputFileTracingRoot: path.join(__dirname, "../../"),
   },
 };
 
