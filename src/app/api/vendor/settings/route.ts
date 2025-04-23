@@ -22,7 +22,12 @@ export async function GET() {
         isActive: true,
         address: true,
         phone: true,
-        email: true
+        whatsappNumber: true,
+        isOpen: true,
+        enableDelivery: true,
+        enableTakeaway: true,
+        deliveryFee: true,
+        estimatedPrepTime: true
       }
     })
 
@@ -64,7 +69,12 @@ export async function PUT(request: Request) {
         isActive: data.isActive,
         address: data.address,
         phone: data.phone,
-        email: data.email
+        whatsappNumber: data.whatsappNumber,
+        isOpen: data.isOpen,
+        enableDelivery: data.enableDelivery,
+        enableTakeaway: data.enableTakeaway,
+        deliveryFee: data.deliveryFee,
+        estimatedPrepTime: data.estimatedPrepTime
       }
     })
 
