@@ -7,38 +7,22 @@ export async function GET() {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session) {
+    if (!session?.user || session.user.role !== 'VENDOR') {
       return NextResponse.json(
         { error: 'No autorizado' },
         { status: 401 }
       )
     }
 
-    if (session.user.role !== 'VENDOR') {
-      return NextResponse.json(
-        { error: 'No tienes permisos para realizar esta acción' },
-        { status: 403 }
-      )
-    }
-
     const business = await prisma.business.findUnique({
-      where: {
-        ownerId: session.user.id
-      },
+      where: { ownerId: session.user.id },
       select: {
         name: true,
         description: true,
-        logoUrl: true,
+        isActive: true,
         address: true,
         phone: true,
-        whatsappNumber: true,
-        isActive: true,
-        isOpen: true,
-        enableDelivery: true,
-        enableTakeaway: true,
-        deliveryFee: true,
-        estimatedPrepTime: true,
-        mercadoPagoPublicKey: true,
+        email: true
       }
     })
 
@@ -51,59 +35,44 @@ export async function GET() {
 
     return NextResponse.json(business)
   } catch (error) {
-    console.error('Error al obtener la configuración:', error)
+    console.error('Error al obtener configuración:', error)
     return NextResponse.json(
-      { error: 'Error al obtener la configuración' },
+      { error: 'Error al obtener configuración' },
       { status: 500 }
     )
   }
 }
 
-export async function PATCH(request: Request) {
+export async function PUT(request: Request) {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session) {
+    if (!session?.user || session.user.role !== 'VENDOR') {
       return NextResponse.json(
         { error: 'No autorizado' },
         { status: 401 }
       )
     }
 
-    if (session.user.role !== 'VENDOR') {
-      return NextResponse.json(
-        { error: 'No tienes permisos para realizar esta acción' },
-        { status: 403 }
-      )
-    }
-
     const data = await request.json()
 
     const business = await prisma.business.update({
-      where: {
-        ownerId: session.user.id
-      },
+      where: { ownerId: session.user.id },
       data: {
         name: data.name,
         description: data.description,
-        logoUrl: data.logoUrl,
+        isActive: data.isActive,
         address: data.address,
         phone: data.phone,
-        whatsappNumber: data.whatsappNumber,
-        isActive: data.isActive,
-        isOpen: data.isOpen,
-        enableDelivery: data.enableDelivery,
-        enableTakeaway: data.enableTakeaway,
-        deliveryFee: data.deliveryFee,
-        estimatedPrepTime: data.estimatedPrepTime,
+        email: data.email
       }
     })
 
     return NextResponse.json(business)
   } catch (error) {
-    console.error('Error al actualizar la configuración:', error)
+    console.error('Error al actualizar configuración:', error)
     return NextResponse.json(
-      { error: 'Error al actualizar la configuración' },
+      { error: 'Error al actualizar configuración' },
       { status: 500 }
     )
   }
