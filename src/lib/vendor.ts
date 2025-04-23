@@ -190,7 +190,8 @@ export async function getTopProducts(vendorId: string) {
     throw new Error('Negocio no encontrado')
   }
 
-  return prisma.orderItem.groupBy({
+  // Primero obtenemos los IDs de los productos más vendidos
+  const topProductIds = await prisma.orderItem.groupBy({
     by: ['productId'],
     where: {
       product: {
@@ -206,13 +207,25 @@ export async function getTopProducts(vendorId: string) {
       },
     },
     take: 5,
-    include: {
-      product: {
-        select: {
-          name: true,
-          price: true
-        }
-      }
-    }
   })
+
+  // Luego obtenemos los detalles de esos productos
+  const productsWithDetails = await Promise.all(
+    topProductIds.map(async (item) => {
+      const product = await prisma.product.findUnique({
+        where: { id: item.productId },
+        select: {
+          id: true,
+          name: true,
+          price: true,
+        },
+      })
+      return {
+        ...item,
+        product,
+      }
+    })
+  )
+
+  return productsWithDetails
 } 

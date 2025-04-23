@@ -172,15 +172,15 @@ export default async function VendorDashboard() {
                   </h3>
                   <div className="mt-6 flow-root">
                     <ul role="list" className="-my-5 divide-y divide-gray-200">
-                      {topProducts.map((product) => (
-                        <li key={product.productId} className="py-5">
+                      {topProducts.map((item) => (
+                        <li key={item.productId} className="py-5">
                           <div className="flex items-center space-x-4">
                             <div className="min-w-0 flex-1">
                               <p className="truncate text-sm font-medium text-gray-900">
-                                {product.product?.name || 'Producto no disponible'}
+                                {item.product?.name || 'Producto no disponible'}
                               </p>
                               <p className="truncate text-sm text-gray-500">
-                                {formatCurrency(product.product?.price || 0)} - Vendidos: {product._sum?.quantity || 0}
+                                {formatCurrency(item.product?.price || 0)} - Vendidos: {item._sum?.quantity || 0}
                               </p>
                             </div>
                           </div>
