@@ -150,9 +150,19 @@ export async function getVendorStats(vendorId: string) {
 }
 
 export async function getRecentOrders(vendorId: string) {
+  const business = await prisma.business.findUnique({
+    where: {
+      ownerId: vendorId
+    }
+  })
+
+  if (!business) {
+    throw new Error('Negocio no encontrado')
+  }
+
   return prisma.order.findMany({
     where: {
-      vendorId,
+      businessId: business.id
     },
     include: {
       customer: true,
