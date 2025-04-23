@@ -30,11 +30,7 @@ export async function POST(request: Request) {
         price: data.price,
         isAvailable: data.available,
         categoryId: data.categoryId,
-        vendor: {
-          connect: {
-            id: session.user.id
-          }
-        }
+        userId: session.user.id
       },
     })
 
