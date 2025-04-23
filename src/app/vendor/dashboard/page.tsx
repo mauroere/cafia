@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getVendorStats, getRecentOrders, getTopProducts } from '@/lib/vendor'
 import { formatCurrency } from '@/lib/utils'
+import { OrderStatus } from '@prisma/client'
 import { 
   CurrencyDollarIcon, 
   ShoppingCartIcon, 
@@ -55,6 +56,35 @@ export default async function VendorDashboard() {
         changeType: stats.avgDeliveryTime.change <= 0 ? 'positive' : 'negative',
       },
     ]
+
+    const getOrderStatusStyle = (status: OrderStatus) => {
+      switch (status) {
+        case 'PENDING':
+          return 'bg-yellow-100 text-yellow-800'
+        case 'DELIVERED':
+          return 'bg-green-100 text-green-800'
+        case 'CANCELLED':
+        case 'REJECTED':
+          return 'bg-red-100 text-red-800'
+        default:
+          return 'bg-gray-100 text-gray-800'
+      }
+    }
+
+    const getOrderStatusText = (status: OrderStatus) => {
+      const statusMap: Record<OrderStatus, string> = {
+        PENDING: 'Pendiente',
+        CONFIRMED: 'Confirmado',
+        PREPARING: 'Preparando',
+        READY_FOR_PICKUP: 'Listo para recoger',
+        OUT_FOR_DELIVERY: 'En camino',
+        DELIVERED: 'Entregado',
+        PICKED_UP: 'Recogido',
+        CANCELLED: 'Cancelado',
+        REJECTED: 'Rechazado'
+      }
+      return statusMap[status]
+    }
 
     return (
       <>
@@ -122,16 +152,8 @@ export default async function VendorDashboard() {
                               </p>
                             </div>
                             <div>
-                              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                order.status === 'PENDING'
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : order.status === 'COMPLETED'
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-gray-100 text-gray-800'
-                              }`}>
-                                {order.status === 'PENDING' ? 'Pendiente' : 
-                                 order.status === 'COMPLETED' ? 'Completado' : 
-                                 order.status}
+                              <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getOrderStatusStyle(order.status)}`}>
+                                {getOrderStatusText(order.status)}
                               </span>
                             </div>
                           </div>
