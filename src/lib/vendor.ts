@@ -1,54 +1,69 @@
 import { prisma } from './prisma'
+import { OrderStatus } from '@prisma/client'
 
-export async function getVendorStats(vendorId: string) {
+export async function getVendorStats(userId: string) {
+  const business = await prisma.business.findUnique({
+    where: {
+      ownerId: userId
+    }
+  })
+
+  if (!business) {
+    throw new Error('Negocio no encontrado')
+  }
+
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
   const yesterday = new Date(today)
   yesterday.setDate(yesterday.getDate() - 1)
 
-  // Obtener ventas del día
+  // Obtener ventas del día (pedidos entregados o recogidos)
   const todaySales = await prisma.order.aggregate({
     where: {
-      vendorId,
-      status: 'COMPLETED',
+      businessId: business.id,
+      status: {
+        in: [OrderStatus.DELIVERED, OrderStatus.PICKED_UP]
+      },
       createdAt: {
         gte: today,
       },
     },
     _sum: {
-      total: true,
+      totalAmount: true,
     },
   })
 
   // Obtener ventas de ayer
   const yesterdaySales = await prisma.order.aggregate({
     where: {
-      vendorId,
-      status: 'COMPLETED',
+      businessId: business.id,
+      status: {
+        in: [OrderStatus.DELIVERED, OrderStatus.PICKED_UP]
+      },
       createdAt: {
         gte: yesterday,
         lt: today,
       },
     },
     _sum: {
-      total: true,
+      totalAmount: true,
     },
   })
 
   // Obtener pedidos pendientes
   const pendingOrders = await prisma.order.count({
     where: {
-      vendorId,
-      status: 'PENDING',
+      businessId: business.id,
+      status: OrderStatus.PENDING,
     },
   })
 
   // Obtener pedidos pendientes de ayer
   const yesterdayPendingOrders = await prisma.order.count({
     where: {
-      vendorId,
-      status: 'PENDING',
+      businessId: business.id,
+      status: OrderStatus.PENDING,
       createdAt: {
         gte: yesterday,
         lt: today,
@@ -60,7 +75,7 @@ export async function getVendorStats(vendorId: string) {
   const newCustomers = await prisma.order.groupBy({
     by: ['customerId'],
     where: {
-      vendorId,
+      businessId: business.id,
       createdAt: {
         gte: today,
       },
@@ -72,7 +87,7 @@ export async function getVendorStats(vendorId: string) {
   const yesterdayNewCustomers = await prisma.order.groupBy({
     by: ['customerId'],
     where: {
-      vendorId,
+      businessId: business.id,
       createdAt: {
         gte: yesterday,
         lt: today,
@@ -84,8 +99,10 @@ export async function getVendorStats(vendorId: string) {
   // Calcular tiempo promedio de entrega
   const completedOrders = await prisma.order.findMany({
     where: {
-      vendorId,
-      status: 'COMPLETED',
+      businessId: business.id,
+      status: {
+        in: [OrderStatus.DELIVERED, OrderStatus.PICKED_UP]
+      },
       createdAt: {
         gte: today,
       },
@@ -103,8 +120,10 @@ export async function getVendorStats(vendorId: string) {
   // Calcular tiempo promedio de entrega de ayer
   const yesterdayCompletedOrders = await prisma.order.findMany({
     where: {
-      vendorId,
-      status: 'COMPLETED',
+      businessId: business.id,
+      status: {
+        in: [OrderStatus.DELIVERED, OrderStatus.PICKED_UP]
+      },
       createdAt: {
         gte: yesterday,
         lt: today,
@@ -128,10 +147,10 @@ export async function getVendorStats(vendorId: string) {
 
   return {
     sales: {
-      value: todaySales._sum.total || 0,
+      value: todaySales._sum.totalAmount || 0,
       change: calculateChange(
-        todaySales._sum.total || 0,
-        yesterdaySales._sum.total || 0
+        todaySales._sum.totalAmount || 0,
+        yesterdaySales._sum.totalAmount || 0
       ),
     },
     pendingOrders: {
