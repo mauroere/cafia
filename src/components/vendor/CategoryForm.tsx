@@ -11,9 +11,11 @@ interface CategoryFormProps {
     description?: string
     order?: number
   }
+  onSuccess?: () => void
+  onCancel?: () => void
 }
 
-export default function CategoryForm({ businessId, initialData }: CategoryFormProps) {
+export default function CategoryForm({ businessId, initialData, onSuccess, onCancel }: CategoryFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -51,7 +53,7 @@ export default function CategoryForm({ businessId, initialData }: CategoryFormPr
         throw new Error(data.error || 'Error al guardar la categoría')
       }
 
-      router.push('/vendor/menu')
+      onSuccess?.()
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al guardar la categoría')
@@ -121,7 +123,10 @@ export default function CategoryForm({ businessId, initialData }: CategoryFormPr
       <div className="flex justify-end space-x-3">
         <button
           type="button"
-          onClick={() => router.back()}
+          onClick={() => {
+            onCancel?.()
+            router.back()
+          }}
           className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
         >
           Cancelar

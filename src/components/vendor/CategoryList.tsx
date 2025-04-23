@@ -103,7 +103,12 @@ export default function CategoryList({ businessId }: CategoryListProps) {
           </h3>
           <CategoryForm
             businessId={businessId}
-            category={editingCategory || undefined}
+            initialData={editingCategory ? {
+              id: editingCategory.id,
+              name: editingCategory.name,
+              description: editingCategory.description || '',
+              order: 0
+            } : undefined}
             onSuccess={handleFormSuccess}
             onCancel={handleFormCancel}
           />
