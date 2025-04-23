@@ -6,12 +6,9 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 
 type Stats = {
-  totalOrders: number
-  totalRevenue: number
-  pendingOrders: number
-  completedOrders: number
   totalProducts: number
-  activeProducts: number
+  totalCategories: number
+  isMenuActive: boolean
 }
 
 export default function DashboardStats() {
@@ -74,13 +71,11 @@ export default function DashboardStats() {
       <Card className="p-6">
         <div className="flex items-center">
           <div className="p-3 rounded-full bg-green-100">
-            <CurrencyDollarIcon className="h-6 w-6 text-green-600" />
+            <ShoppingBagIcon className="h-6 w-6 text-green-600" />
           </div>
           <div className="ml-4">
-            <p className="text-sm font-medium text-gray-500">Ingresos Totales</p>
-            <p className="text-2xl font-semibold">
-              ${stats?.totalRevenue.toFixed(2) || '0.00'}
-            </p>
+            <p className="text-sm font-medium text-gray-500">Total Productos</p>
+            <p className="text-2xl font-semibold">{stats?.totalProducts || 0}</p>
           </div>
         </div>
       </Card>
@@ -88,11 +83,11 @@ export default function DashboardStats() {
       <Card className="p-6">
         <div className="flex items-center">
           <div className="p-3 rounded-full bg-blue-100">
-            <ShoppingBagIcon className="h-6 w-6 text-blue-600" />
+            <ClockIcon className="h-6 w-6 text-blue-600" />
           </div>
           <div className="ml-4">
-            <p className="text-sm font-medium text-gray-500">Pedidos Pendientes</p>
-            <p className="text-2xl font-semibold">{stats?.pendingOrders || 0}</p>
+            <p className="text-sm font-medium text-gray-500">Total Categorías</p>
+            <p className="text-2xl font-semibold">{stats?.totalCategories || 0}</p>
           </div>
         </div>
       </Card>
@@ -100,23 +95,13 @@ export default function DashboardStats() {
       <Card className="p-6">
         <div className="flex items-center">
           <div className="p-3 rounded-full bg-yellow-100">
-            <ClockIcon className="h-6 w-6 text-yellow-600" />
+            <UserGroupIcon className="h-6 w-6 text-yellow-600" />
           </div>
           <div className="ml-4">
-            <p className="text-sm font-medium text-gray-500">Total Pedidos</p>
-            <p className="text-2xl font-semibold">{stats?.totalOrders || 0}</p>
-          </div>
-        </div>
-      </Card>
-
-      <Card className="p-6">
-        <div className="flex items-center">
-          <div className="p-3 rounded-full bg-purple-100">
-            <UserGroupIcon className="h-6 w-6 text-purple-600" />
-          </div>
-          <div className="ml-4">
-            <p className="text-sm font-medium text-gray-500">Productos Activos</p>
-            <p className="text-2xl font-semibold">{stats?.activeProducts || 0}</p>
+            <p className="text-sm font-medium text-gray-500">Estado del Menú</p>
+            <p className="text-2xl font-semibold">
+              {stats?.isMenuActive ? 'Activo' : 'Inactivo'}
+            </p>
           </div>
         </div>
       </Card>
