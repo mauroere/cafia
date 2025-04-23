@@ -25,6 +25,7 @@ function LoginForm() {
         email,
         password,
         redirect: false,
+        callbackUrl: '/vendor/dashboard'
       })
 
       if (result?.error) {
@@ -44,7 +45,7 @@ function LoginForm() {
       }
 
       // Si el login fue exitoso, redirigir
-      router.push('/vendor')
+      router.push('/vendor/dashboard')
     } catch (error) {
       console.error('Error en el login:', error)
       setError('Ocurrió un error al iniciar sesión')
