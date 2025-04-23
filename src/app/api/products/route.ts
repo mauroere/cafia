@@ -42,7 +42,7 @@ export async function POST(request: Request) {
         name: data.name,
         description: data.description,
         price: data.price,
-        isAvailable: data.available,
+        isAvailable: data.isAvailable,
         categoryId: data.categoryId,
         businessId: business.id
       },

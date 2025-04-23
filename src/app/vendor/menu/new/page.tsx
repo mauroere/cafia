@@ -19,7 +19,7 @@ export default function NewProductPage() {
       name: formData.get('name') as string,
       description: formData.get('description') as string,
       price: parseFloat(formData.get('price') as string),
-      available: formData.get('isAvailable') === 'on',
+      isAvailable: formData.get('isAvailable') === 'on',
       categoryId: formData.get('categoryId') as string,
       vendorId: session?.user?.id as string,
     }
