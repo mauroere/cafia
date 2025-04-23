@@ -40,7 +40,7 @@ export async function PATCH(
         id: params.businessId
       },
       data: {
-        isMenuActive: data.isActive
+        isActive: data.isActive
       }
     })
 
