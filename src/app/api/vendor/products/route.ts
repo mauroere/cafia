@@ -84,69 +84,63 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
-    
-    if (!session?.user || session.user.role !== 'VENDOR') {
+
+    if (!session) {
       return NextResponse.json(
         { error: 'No autorizado' },
         { status: 401 }
       )
     }
 
-    // Obtener el negocio del vendedor
+    const data = await request.json()
+
+    // Verificar que el negocio pertenece al usuario
     const business = await prisma.business.findUnique({
-      where: { ownerId: session.user.id },
-      select: { id: true }
+      where: {
+        id: data.businessId,
+        ownerId: session.user.id
+      }
     })
 
     if (!business) {
       return NextResponse.json(
-        { error: 'Negocio no encontrado' },
+        { error: 'Negocio no encontrado o no autorizado' },
         { status: 404 }
       )
     }
 
-    // Obtener y validar los datos de la solicitud
-    const body = await request.json()
-    const validatedData = productSchema.parse(body)
+    // Verificar que la categoría pertenece al negocio
+    const category = await prisma.category.findUnique({
+      where: {
+        id: data.categoryId,
+        businessId: business.id
+      }
+    })
 
-    // Preparar los datos para la creación
-    const productData: Prisma.ProductCreateInput = {
-      name: validatedData.name,
-      price: validatedData.price,
-      isAvailable: validatedData.isAvailable,
-      business: {
-        connect: { id: business.id }
-      },
-      category: validatedData.categoryId 
-        ? { connect: { id: validatedData.categoryId } }
-        : { connect: { id: 'default-category-id' } }, // Asegúrate de tener una categoría por defecto
-      ...(validatedData.description && { description: validatedData.description }),
-      ...(validatedData.imageUrl && { imageUrl: validatedData.imageUrl }),
-      ...(validatedData.preparationTime && { preparationTime: validatedData.preparationTime }),
-      ...(validatedData.allergens && { allergens: validatedData.allergens }),
-      ...(validatedData.nutritionalInfo && { nutritionalInfo: validatedData.nutritionalInfo })
+    if (!category) {
+      return NextResponse.json(
+        { error: 'Categoría no encontrada' },
+        { status: 404 }
+      )
     }
 
     // Crear el producto
     const product = await prisma.product.create({
-      data: productData,
-      include: {
-        category: true
+      data: {
+        name: data.name,
+        description: data.description,
+        price: data.price,
+        isAvailable: data.isAvailable,
+        categoryId: data.categoryId,
+        businessId: business.id
       }
     })
 
-    return NextResponse.json(product, { status: 201 })
+    return NextResponse.json(product)
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Datos inválidos', details: error.errors },
-        { status: 400 }
-      )
-    }
-
-    console.error('Error al crear producto:', error)
+    console.error('Error al crear el producto:', error)
     return NextResponse.json(
-      { error: 'Error al crear producto' },
+      { error: 'Error al crear el producto' },
       { status: 500 }
     )
   }

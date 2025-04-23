@@ -1,39 +1,13 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { formatCurrency } from '@/lib/utils'
-import { PlusIcon } from '@heroicons/react/24/outline'
-import Link from 'next/link'
+import QRCodeDisplay from '@/components/vendor/QRCodeDisplay'
+import MenuStatusToggle from '@/components/vendor/MenuStatusToggle'
+import ProductCategoryManager from '@/components/vendor/ProductCategoryManager'
 
-async function getProducts(userId: string) {
-  const business = await prisma.business.findUnique({
-    where: {
-      ownerId: userId
-    }
-  })
-
-  if (!business) {
-    throw new Error('Negocio no encontrado')
-  }
-
-  return prisma.product.findMany({
-    where: {
-      businessId: business.id
-    },
-    include: {
-      category: true,
-    },
-    orderBy: {
-      category: {
-        name: 'asc',
-      },
-    },
-  })
-}
-
-export default async function MenuPage() {
+export default async function VendorMenu() {
   const session = await getServerSession(authOptions)
-
+  
   if (!session?.user?.id) {
     return (
       <div className="p-4 text-red-600">
@@ -42,87 +16,83 @@ export default async function MenuPage() {
     )
   }
 
-  try {
-    const products = await getProducts(session.user.id)
-
-    // Agrupar productos por categoría
-    const productsByCategory = products.reduce((acc, product) => {
-      const categoryName = product.category?.name || 'Sin categoría'
-      if (!acc[categoryName]) {
-        acc[categoryName] = []
+  const business = await prisma.business.findUnique({
+    where: { ownerId: session.user.id },
+    include: {
+      categories: {
+        include: {
+          products: true
+        }
       }
-      acc[categoryName].push(product)
-      return acc
-    }, {} as Record<string, typeof products>)
+    }
+  })
 
-    return (
-      <>
-        <header className="mb-8">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between">
-              <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
-                Menú Digital
-              </h1>
-              <Link
-                href="/vendor/menu/new"
-                className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                <PlusIcon className="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
-                Nuevo Producto
-              </Link>
-            </div>
-          </div>
-        </header>
-
-        <main>
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            {Object.entries(productsByCategory).map(([category, products]) => (
-              <div key={category} className="mb-8">
-                <h2 className="text-lg font-medium text-gray-900 mb-4">{category}</h2>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {products.map((product) => (
-                    <div
-                      key={product.id}
-                      className="relative flex items-center space-x-3 rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm hover:border-gray-400"
-                    >
-                      {product.imageUrl && (
-                        <div className="flex-shrink-0">
-                          <img className="h-10 w-10 rounded-full" src={product.imageUrl} alt="" />
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <Link href={`/vendor/menu/${product.id}`} className="focus:outline-none">
-                          <span className="absolute inset-0" aria-hidden="true" />
-                          <p className="text-sm font-medium text-gray-900">{product.name}</p>
-                          <p className="truncate text-sm text-gray-500">{formatCurrency(product.price)}</p>
-                        </Link>
-                      </div>
-                      <div className="flex-shrink-0">
-                        <div
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                            product.isAvailable
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {product.isAvailable ? 'Disponible' : 'No disponible'}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </main>
-      </>
-    )
-  } catch (error) {
-    console.error('Error al cargar el menú:', error)
+  if (!business) {
     return (
       <div className="p-4 text-red-600">
-        Error al cargar el menú. Por favor, intente nuevamente.
+        Error: No se encontró el negocio asociado
       </div>
     )
   }
+
+  return (
+    <>
+      <header className="mb-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
+            Menú Digital
+          </h1>
+        </div>
+      </header>
+
+      <main>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {/* Panel de QR y Estado */}
+            <div className="space-y-6">
+              <div className="overflow-hidden rounded-lg bg-white shadow">
+                <div className="p-6">
+                  <h2 className="text-base font-semibold leading-6 text-gray-900">
+                    Código QR de tu Menú
+                  </h2>
+                  <div className="mt-4">
+                    <QRCodeDisplay businessId={business.id} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="overflow-hidden rounded-lg bg-white shadow">
+                <div className="p-6">
+                  <h2 className="text-base font-semibold leading-6 text-gray-900">
+                    Estado del Menú
+                  </h2>
+                  <div className="mt-4">
+                    <MenuStatusToggle 
+                      businessId={business.id} 
+                      initialStatus={business.isMenuActive} 
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Gestor de Productos y Categorías */}
+            <div className="overflow-hidden rounded-lg bg-white shadow">
+              <div className="p-6">
+                <h2 className="text-base font-semibold leading-6 text-gray-900">
+                  Gestionar Menú
+                </h2>
+                <div className="mt-4">
+                  <ProductCategoryManager 
+                    businessId={business.id}
+                    categories={business.categories}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </>
+  )
 } 

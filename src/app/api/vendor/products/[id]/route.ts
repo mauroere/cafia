@@ -151,42 +151,105 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
+export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
-    
-    if (!session?.user || session.user.role !== 'VENDOR') {
+
+    if (!session) {
       return NextResponse.json(
         { error: 'No autorizado' },
         { status: 401 }
       )
     }
 
-    // Obtener el negocio del vendedor
-    const business = await prisma.business.findUnique({
-      where: { ownerId: session.user.id },
-      select: { id: true }
+    const data = await request.json()
+
+    // Verificar que el producto existe y pertenece al negocio del usuario
+    const product = await prisma.product.findFirst({
+      where: {
+        id: params.id,
+        business: {
+          ownerId: session.user.id
+        }
+      }
     })
 
-    if (!business) {
+    if (!product) {
       return NextResponse.json(
-        { error: 'Negocio no encontrado' },
+        { error: 'Producto no encontrado' },
         { status: 404 }
       )
     }
 
-    // Verificar que el producto existe y pertenece al negocio
-    const existingProduct = await prisma.product.findUnique({
+    // Verificar que la categoría pertenece al negocio
+    const category = await prisma.category.findFirst({
       where: {
-        id: params.id,
-        businessId: business.id
+        id: data.categoryId,
+        business: {
+          ownerId: session.user.id
+        }
       }
     })
 
-    if (!existingProduct) {
+    if (!category) {
+      return NextResponse.json(
+        { error: 'Categoría no encontrada' },
+        { status: 404 }
+      )
+    }
+
+    // Actualizar el producto
+    const updatedProduct = await prisma.product.update({
+      where: {
+        id: params.id
+      },
+      data: {
+        name: data.name,
+        description: data.description,
+        price: data.price,
+        isAvailable: data.isAvailable,
+        categoryId: data.categoryId
+      }
+    })
+
+    return NextResponse.json(updatedProduct)
+  } catch (error) {
+    console.error('Error al actualizar el producto:', error)
+    return NextResponse.json(
+      { error: 'Error al actualizar el producto' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'No autorizado' },
+        { status: 401 }
+      )
+    }
+
+    // Verificar que el producto existe y pertenece al negocio del usuario
+    const product = await prisma.product.findFirst({
+      where: {
+        id: params.id,
+        business: {
+          ownerId: session.user.id
+        }
+      }
+    })
+
+    if (!product) {
       return NextResponse.json(
         { error: 'Producto no encontrado' },
         { status: 404 }
@@ -200,11 +263,11 @@ export async function DELETE(
       }
     })
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ message: 'Producto eliminado correctamente' })
   } catch (error) {
-    console.error('Error al eliminar producto:', error)
+    console.error('Error al eliminar el producto:', error)
     return NextResponse.json(
-      { error: 'Error al eliminar producto' },
+      { error: 'Error al eliminar el producto' },
       { status: 500 }
     )
   }

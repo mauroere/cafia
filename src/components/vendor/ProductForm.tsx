@@ -1,94 +1,91 @@
 'use client'
 
 import { useState } from 'react'
-import { Product, Category } from '@prisma/client'
 import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
-
-type ProductWithCategory = Product & {
-  category: Category
-}
+import { Category } from '@prisma/client'
 
 interface ProductFormProps {
-  product?: ProductWithCategory
-  categories: Category[]
   businessId: string
+  categories: Category[]
+  initialData?: {
+    id?: string
+    name: string
+    description: string
+    price: number
+    isAvailable: boolean
+    categoryId: string
+  }
 }
 
-export default function ProductForm({ product, categories, businessId }: ProductFormProps) {
+export default function ProductForm({ businessId, categories, initialData }: ProductFormProps) {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState('')
+
   const [formData, setFormData] = useState({
-    name: product?.name || '',
-    description: product?.description || '',
-    price: product?.price || 0,
-    imageUrl: product?.imageUrl || '',
-    categoryId: product?.categoryId || categories[0]?.id || '',
-    businessId: businessId
+    name: initialData?.name || '',
+    description: initialData?.description || '',
+    price: initialData?.price || 0,
+    isAvailable: initialData?.isAvailable ?? true,
+    categoryId: initialData?.categoryId || categories[0]?.id || '',
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setError('')
 
     try {
-      const url = product 
-        ? `/api/vendor/products/${product.id}`
+      const url = initialData?.id 
+        ? `/api/vendor/products/${initialData.id}`
         : '/api/vendor/products'
       
-      const method = product ? 'PATCH' : 'POST'
-
       const response = await fetch(url, {
-        method,
+        method: initialData?.id ? 'PUT' : 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          businessId,
+          price: Number(formData.price),
+        }),
       })
 
       if (!response.ok) {
-        throw new Error('Error al guardar el producto')
+        const data = await response.json()
+        throw new Error(data.error || 'Error al guardar el producto')
       }
 
-      toast.success(
-        product 
-          ? 'Producto actualizado correctamente'
-          : 'Producto creado correctamente'
-      )
-      router.push('/vendor/products')
+      router.push('/vendor/menu')
       router.refresh()
-    } catch (error) {
-      toast.error('Error al guardar el producto')
-      console.error(error)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al guardar el producto')
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: name === 'price' ? parseFloat(value) : value
-    }))
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {error && (
+        <div className="rounded-md bg-red-50 p-4">
+          <div className="text-sm text-red-700">{error}</div>
+        </div>
+      )}
+
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-          Nombre
+          Nombre del producto
         </label>
         <input
           type="text"
-          id="name"
           name="name"
-          value={formData.name}
-          onChange={handleChange}
+          id="name"
           required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
         />
       </div>
 
@@ -97,13 +94,12 @@ export default function ProductForm({ product, categories, businessId }: Product
           Descripción
         </label>
         <textarea
-          id="description"
           name="description"
-          value={formData.description}
-          onChange={handleChange}
-          required
+          id="description"
           rows={3}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
         />
       </div>
 
@@ -111,45 +107,35 @@ export default function ProductForm({ product, categories, businessId }: Product
         <label htmlFor="price" className="block text-sm font-medium text-gray-700">
           Precio
         </label>
-        <input
-          type="number"
-          id="price"
-          name="price"
-          value={formData.price}
-          onChange={handleChange}
-          required
-          min="0"
-          step="0.01"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-        />
+        <div className="relative mt-1 rounded-md shadow-sm">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+            <span className="text-gray-500 sm:text-sm">$</span>
+          </div>
+          <input
+            type="number"
+            name="price"
+            id="price"
+            required
+            min="0"
+            step="0.01"
+            value={formData.price}
+            onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+            className="block w-full rounded-md border-gray-300 pl-7 focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+          />
+        </div>
       </div>
 
       <div>
-        <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700">
-          URL de la imagen
-        </label>
-        <input
-          type="url"
-          id="imageUrl"
-          name="imageUrl"
-          value={formData.imageUrl}
-          onChange={handleChange}
-          required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="category" className="block text-sm font-medium text-gray-700">
           Categoría
         </label>
         <select
-          id="categoryId"
-          name="categoryId"
-          value={formData.categoryId}
-          onChange={handleChange}
+          id="category"
+          name="category"
           required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+          value={formData.categoryId}
+          onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
         >
           {categories.map((category) => (
             <option key={category.id} value={category.id}>
@@ -159,20 +145,34 @@ export default function ProductForm({ product, categories, businessId }: Product
         </select>
       </div>
 
-      <div className="flex justify-end space-x-4">
+      <div className="flex items-center">
+        <input
+          id="isAvailable"
+          name="isAvailable"
+          type="checkbox"
+          checked={formData.isAvailable}
+          onChange={(e) => setFormData({ ...formData, isAvailable: e.target.checked })}
+          className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+        />
+        <label htmlFor="isAvailable" className="ml-2 block text-sm text-gray-900">
+          Disponible para la venta
+        </label>
+      </div>
+
+      <div className="flex justify-end space-x-3">
         <button
           type="button"
           onClick={() => router.back()}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:opacity-50"
+          className="inline-flex justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
         >
-          {isSubmitting ? 'Guardando...' : product ? 'Actualizar' : 'Crear'}
+          {isSubmitting ? 'Guardando...' : initialData?.id ? 'Actualizar' : 'Crear'}
         </button>
       </div>
     </form>

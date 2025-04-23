@@ -120,57 +120,110 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    if (!session) {
+      return NextResponse.json(
+        { error: 'No autorizado' },
+        { status: 401 }
+      )
     }
 
-    const category = await prisma.category.findUnique({
+    // Verificar que la categoría existe y pertenece al negocio del usuario
+    const category = await prisma.category.findFirst({
       where: {
         id: params.id,
+        business: {
+          ownerId: session.user.id
+        }
       },
       include: {
-        business: {
-          include: {
-            owner: true
-          }
-        },
-      },
+        products: {
+          select: { id: true }
+        }
+      }
     })
 
     if (!category) {
-      return NextResponse.json({ error: 'Categoría no encontrada' }, { status: 404 })
-    }
-
-    // Verificar que el usuario es dueño del negocio
-    if (category.business.owner.id !== session.user.id) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
-
-    // Verificar si hay productos asociados
-    const productsCount = await prisma.product.count({
-      where: {
-        categoryId: params.id,
-      },
-    })
-
-    if (productsCount > 0) {
       return NextResponse.json(
-        { error: 'No se puede eliminar la categoría porque tiene productos asociados' },
+        { error: 'Categoría no encontrada' },
+        { status: 404 }
+      )
+    }
+
+    // Verificar si la categoría tiene productos
+    if (category.products.length > 0) {
+      return NextResponse.json(
+        { error: 'No se puede eliminar una categoría que tiene productos' },
         { status: 400 }
       )
     }
 
+    // Eliminar la categoría
     await prisma.category.delete({
       where: {
-        id: params.id,
-      },
+        id: params.id
+      }
     })
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ message: 'Categoría eliminada correctamente' })
   } catch (error) {
-    console.error('Error al eliminar categoría:', error)
+    console.error('Error al eliminar la categoría:', error)
     return NextResponse.json(
-      { error: 'Error al eliminar categoría' },
+      { error: 'Error al eliminar la categoría' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PUT(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'No autorizado' },
+        { status: 401 }
+      )
+    }
+
+    const data = await request.json()
+
+    // Verificar que la categoría existe y pertenece al negocio del usuario
+    const category = await prisma.category.findFirst({
+      where: {
+        id: params.id,
+        business: {
+          ownerId: session.user.id
+        }
+      }
+    })
+
+    if (!category) {
+      return NextResponse.json(
+        { error: 'Categoría no encontrada' },
+        { status: 404 }
+      )
+    }
+
+    // Actualizar la categoría
+    const updatedCategory = await prisma.category.update({
+      where: {
+        id: params.id
+      },
+      data: {
+        name: data.name,
+        description: data.description,
+        order: data.order
+      }
+    })
+
+    return NextResponse.json(updatedCategory)
+  } catch (error) {
+    console.error('Error al actualizar la categoría:', error)
+    return NextResponse.json(
+      { error: 'Error al actualizar la categoría' },
       { status: 500 }
     )
   }
