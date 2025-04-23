@@ -1,8 +1,6 @@
-import { redirect } from 'next/navigation'
 import { getServerSession } from 'next-auth'
+import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
-import { Role } from '@prisma/client'
-import Sidebar from '@/components/vendor/Sidebar'
 
 export default async function VendorLayout({
   children,
@@ -11,16 +9,15 @@ export default async function VendorLayout({
 }) {
   const session = await getServerSession(authOptions)
 
-  if (!session || session.user.role !== Role.VENDOR) {
-    redirect('/auth/login')
+  if (!session?.user || session.user.role !== 'VENDOR') {
+    redirect('/auth/vendor/login')
   }
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <Sidebar />
-      <main className="flex-1 overflow-y-auto p-8">
+    <div className="min-h-screen bg-gray-100">
+      <div className="py-10">
         {children}
-      </main>
+      </div>
     </div>
   )
 } 
