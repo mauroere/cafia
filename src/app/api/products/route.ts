@@ -21,6 +21,20 @@ export async function POST(request: Request) {
       )
     }
 
+    // Obtener el negocio del usuario
+    const business = await prisma.business.findUnique({
+      where: {
+        ownerId: session.user.id
+      }
+    })
+
+    if (!business) {
+      return NextResponse.json(
+        { error: 'No se encontró el negocio asociado' },
+        { status: 404 }
+      )
+    }
+
     const data = await request.json()
 
     const product = await prisma.product.create({
@@ -30,7 +44,7 @@ export async function POST(request: Request) {
         price: data.price,
         isAvailable: data.available,
         categoryId: data.categoryId,
-        userId: session.user.id
+        businessId: business.id
       },
     })
 
