@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth'
 import { redirect } from 'next/navigation'
 import { authOptions } from '@/lib/auth'
+import Sidebar from '@/components/vendor/Sidebar'
 
 export default async function VendorLayout({
   children,
@@ -14,9 +15,12 @@ export default async function VendorLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="py-10">
-        {children}
+    <div className="flex min-h-screen">
+      <Sidebar />
+      <div className="flex-1 bg-gray-100">
+        <div className="py-10">
+          {children}
+        </div>
       </div>
     </div>
   )
