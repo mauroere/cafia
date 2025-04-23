@@ -180,18 +180,22 @@ export async function getRecentOrders(vendorId: string) {
 }
 
 export async function getTopProducts(vendorId: string) {
-  const today = new Date()
-  today.setDate(today.getDate() - 30) // Últimos 30 días
+  const business = await prisma.business.findUnique({
+    where: {
+      ownerId: vendorId
+    }
+  })
+
+  if (!business) {
+    throw new Error('Negocio no encontrado')
+  }
 
   return prisma.orderItem.groupBy({
     by: ['productId'],
     where: {
-      order: {
-        vendorId,
-        createdAt: {
-          gte: today,
-        },
-      },
+      product: {
+        businessId: business.id
+      }
     },
     _sum: {
       quantity: true,
@@ -202,5 +206,13 @@ export async function getTopProducts(vendorId: string) {
       },
     },
     take: 5,
+    include: {
+      product: {
+        select: {
+          name: true,
+          price: true
+        }
+      }
+    }
   })
 } 

@@ -177,10 +177,10 @@ export default async function VendorDashboard() {
                           <div className="flex items-center space-x-4">
                             <div className="min-w-0 flex-1">
                               <p className="truncate text-sm font-medium text-gray-900">
-                                {product.productId}
+                                {product.product?.name || 'Producto no disponible'}
                               </p>
                               <p className="truncate text-sm text-gray-500">
-                                Vendidos: {product._sum.quantity}
+                                {formatCurrency(product.product?.price || 0)} - Vendidos: {product._sum?.quantity || 0}
                               </p>
                             </div>
                           </div>
