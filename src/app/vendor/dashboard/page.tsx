@@ -1,5 +1,7 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { getVendorStats, getRecentOrders, getTopProducts } from '@/lib/vendor'
+import { formatCurrency } from '@/lib/utils'
 import { 
   CurrencyDollarIcon, 
   ShoppingCartIcon, 
@@ -7,39 +9,42 @@ import {
   ClockIcon 
 } from '@heroicons/react/24/outline'
 
-const stats = [
-  {
-    name: 'Ventas del día',
-    value: '$2,500',
-    icon: CurrencyDollarIcon,
-    change: '+4.75%',
-    changeType: 'positive',
-  },
-  {
-    name: 'Pedidos pendientes',
-    value: '12',
-    icon: ShoppingCartIcon,
-    change: '+54.02%',
-    changeType: 'negative',
-  },
-  {
-    name: 'Clientes nuevos',
-    value: '23',
-    icon: UserGroupIcon,
-    change: '+2.59%',
-    changeType: 'positive',
-  },
-  {
-    name: 'Tiempo promedio',
-    value: '24.5m',
-    icon: ClockIcon,
-    change: '-1.87%',
-    changeType: 'positive',
-  },
-]
-
 export default async function VendorDashboard() {
   const session = await getServerSession(authOptions)
+  const stats = await getVendorStats(session?.user?.id as string)
+  const recentOrders = await getRecentOrders(session?.user?.id as string)
+  const topProducts = await getTopProducts(session?.user?.id as string)
+
+  const statCards = [
+    {
+      name: 'Ventas del día',
+      value: formatCurrency(stats.sales.value),
+      icon: CurrencyDollarIcon,
+      change: stats.sales.change.toFixed(2) + '%',
+      changeType: stats.sales.change >= 0 ? 'positive' : 'negative',
+    },
+    {
+      name: 'Pedidos pendientes',
+      value: stats.pendingOrders.value.toString(),
+      icon: ShoppingCartIcon,
+      change: stats.pendingOrders.change.toFixed(2) + '%',
+      changeType: stats.pendingOrders.change <= 0 ? 'positive' : 'negative',
+    },
+    {
+      name: 'Clientes nuevos',
+      value: stats.newCustomers.value.toString(),
+      icon: UserGroupIcon,
+      change: stats.newCustomers.change.toFixed(2) + '%',
+      changeType: stats.newCustomers.change >= 0 ? 'positive' : 'negative',
+    },
+    {
+      name: 'Tiempo promedio',
+      value: `${stats.avgDeliveryTime.value}m`,
+      icon: ClockIcon,
+      change: stats.avgDeliveryTime.change.toFixed(2) + '%',
+      changeType: stats.avgDeliveryTime.change <= 0 ? 'positive' : 'negative',
+    },
+  ]
 
   return (
     <>
@@ -55,7 +60,7 @@ export default async function VendorDashboard() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Estadísticas */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {stats.map((stat) => (
+            {statCards.map((stat) => (
               <div
                 key={stat.name}
                 className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6"
@@ -93,8 +98,36 @@ export default async function VendorDashboard() {
                 <h3 className="text-base font-semibold leading-6 text-gray-900">
                   Pedidos Recientes
                 </h3>
-                <div className="mt-2 text-sm text-gray-500">
-                  Lista de los últimos pedidos recibidos...
+                <div className="mt-6 flow-root">
+                  <ul role="list" className="-my-5 divide-y divide-gray-200">
+                    {recentOrders.map((order) => (
+                      <li key={order.id} className="py-5">
+                        <div className="flex items-center space-x-4">
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-gray-900">
+                              {order.customer.name}
+                            </p>
+                            <p className="truncate text-sm text-gray-500">
+                              {order.items.length} productos - {formatCurrency(order.total)}
+                            </p>
+                          </div>
+                          <div>
+                            <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                              order.status === 'PENDING'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : order.status === 'COMPLETED'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {order.status === 'PENDING' ? 'Pendiente' : 
+                               order.status === 'COMPLETED' ? 'Completado' : 
+                               order.status}
+                            </span>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             </div>
@@ -105,8 +138,23 @@ export default async function VendorDashboard() {
                 <h3 className="text-base font-semibold leading-6 text-gray-900">
                   Productos Más Vendidos
                 </h3>
-                <div className="mt-2 text-sm text-gray-500">
-                  Lista de productos más populares...
+                <div className="mt-6 flow-root">
+                  <ul role="list" className="-my-5 divide-y divide-gray-200">
+                    {topProducts.map((product) => (
+                      <li key={product.productId} className="py-5">
+                        <div className="flex items-center space-x-4">
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-gray-900">
+                              {product.productId}
+                            </p>
+                            <p className="truncate text-sm text-gray-500">
+                              Vendidos: {product._sum.quantity}
+                            </p>
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             </div>
