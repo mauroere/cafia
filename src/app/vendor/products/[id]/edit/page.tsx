@@ -51,7 +51,14 @@ export default async function EditProductPage({ params }: EditProductPageProps) 
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-8">Editar Producto</h1>
       <ProductForm 
-        product={product} 
+        initialData={{
+          id: product.id,
+          name: product.name,
+          description: product.description || '',
+          price: product.price,
+          isAvailable: product.isAvailable,
+          categoryId: product.category.id
+        }}
         categories={categories} 
         businessId={business.id} 
       />
