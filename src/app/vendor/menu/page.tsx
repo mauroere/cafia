@@ -80,12 +80,12 @@ export default async function MenuPage() {
                     <div className="flex-shrink-0">
                       <div
                         className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          product.available
+                          product.isAvailable
                             ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
                         }`}
                       >
-                        {product.available ? 'Disponible' : 'No disponible'}
+                        {product.isAvailable ? 'Disponible' : 'No disponible'}
                       </div>
                     </div>
                   </div>

@@ -28,7 +28,7 @@ export async function POST(request: Request) {
         name: data.name,
         description: data.description,
         price: data.price,
-        available: data.available,
+        isAvailable: data.available,
         categoryId: data.categoryId,
         vendorId: session.user.id,
       },

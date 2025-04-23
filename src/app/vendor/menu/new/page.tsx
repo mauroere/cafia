@@ -19,7 +19,7 @@ export default function NewProductPage() {
       name: formData.get('name') as string,
       description: formData.get('description') as string,
       price: parseFloat(formData.get('price') as string),
-      available: formData.get('available') === 'on',
+      available: formData.get('isAvailable') === 'on',
       categoryId: formData.get('categoryId') as string,
       vendorId: session?.user?.id as string,
     }
@@ -137,14 +137,14 @@ export default function NewProductPage() {
             <div className="relative flex items-start">
               <div className="flex h-6 items-center">
                 <input
-                  id="available"
-                  name="available"
+                  id="isAvailable"
+                  name="isAvailable"
                   type="checkbox"
                   className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
                 />
               </div>
               <div className="ml-3 text-sm leading-6">
-                <label htmlFor="available" className="font-medium text-gray-900">
+                <label htmlFor="isAvailable" className="font-medium text-gray-900">
                   Disponible
                 </label>
                 <p className="text-gray-500">
