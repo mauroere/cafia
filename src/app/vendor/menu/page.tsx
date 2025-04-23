@@ -69,7 +69,7 @@ export default async function VendorMenu() {
                   <div className="mt-4">
                     <MenuStatusToggle 
                       businessId={business.id} 
-                      initialStatus={business.isMenuActive} 
+                      initialStatus={business.isActive} 
                     />
                   </div>
                 </div>
