@@ -27,6 +27,7 @@ const nextConfig = {
   output: "standalone",
   experimental: {
     outputFileTracingRoot: __dirname,
+    serverActions: true,
   },
 };
 
