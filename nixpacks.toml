@@ -1,2 +1,5 @@
 [packages]
-libvips = "libvips" 
+libvips = "libvips"
+
+[context.production.environment]
+PORT = "3000" 
