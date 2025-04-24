@@ -61,13 +61,27 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
   const status = searchParams.status
   const date = searchParams.date
 
+  // Primero, buscar los IDs de los clientes que coincidan con la búsqueda
+  let customerIds: string[] = []
+  if (search) {
+    const customers = await prisma.user.findMany({
+      where: {
+        OR: [
+          { name: { contains: search } },
+          { email: { contains: search } }
+        ]
+      },
+      select: { id: true }
+    })
+    customerIds = customers.map(c => c.id)
+  }
+
   const where = {
     businessId: business.id,
     ...(search && {
       OR: [
         { id: { contains: search } },
-        { customer: { name: { contains: search } } },
-        { customer: { email: { contains: search } } }
+        ...(customerIds.length > 0 ? [{ customerId: { in: customerIds } }] : [])
       ]
     }),
     ...(status && { status }),
