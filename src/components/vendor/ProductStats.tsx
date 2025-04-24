@@ -1,7 +1,7 @@
 'use client'
 
 import { Product } from '@prisma/client'
-import { Card, CardContent, CardHeader, CardTitle } from '../../ui/Card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 interface ProductStatsProps {
