@@ -18,18 +18,17 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    
-    if (!session?.user || session.user.role !== 'VENDOR') {
+    if (!session) {
       return NextResponse.json(
         { error: 'No autorizado' },
         { status: 401 }
       )
     }
 
-    // Obtener el negocio del vendedor
     const business = await prisma.business.findUnique({
-      where: { ownerId: session.user.id },
-      select: { id: true }
+      where: {
+        ownerId: session.user.id
+      }
     })
 
     if (!business) {
@@ -39,25 +38,20 @@ export async function GET(
       )
     }
 
-    // Obtener el pedido
     const order = await prisma.order.findUnique({
-      where: { 
+      where: {
         id: params.id,
         businessId: business.id
       },
       include: {
-        customer: {
-          select: {
-            name: true,
-            email: true
-          }
-        },
         items: {
           include: {
             product: {
               select: {
                 id: true,
                 name: true,
+                description: true,
+                price: true,
                 imageUrl: true
               }
             }
@@ -77,7 +71,7 @@ export async function GET(
   } catch (error) {
     console.error('Error al obtener el pedido:', error)
     return NextResponse.json(
-      { error: 'Error al obtener el pedido' },
+      { error: 'Error interno del servidor' },
       { status: 500 }
     )
   }
@@ -89,18 +83,17 @@ export async function PATCH(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    
-    if (!session?.user || session.user.role !== 'VENDOR') {
+    if (!session) {
       return NextResponse.json(
         { error: 'No autorizado' },
         { status: 401 }
       )
     }
 
-    // Obtener el negocio del vendedor
     const business = await prisma.business.findUnique({
-      where: { ownerId: session.user.id },
-      select: { id: true }
+      where: {
+        ownerId: session.user.id
+      }
     })
 
     if (!business) {
@@ -110,13 +103,11 @@ export async function PATCH(
       )
     }
 
-    // Verificar que el pedido pertenece al negocio
     const order = await prisma.order.findUnique({
-      where: { 
+      where: {
         id: params.id,
         businessId: business.id
-      },
-      select: { id: true, status: true }
+      }
     })
 
     if (!order) {
@@ -126,29 +117,51 @@ export async function PATCH(
       )
     }
 
-    // Obtener y validar los datos de la solicitud
     const body = await request.json()
-    const validatedData = updateOrderSchema.parse(body)
+    const { status } = body
 
-    // Actualizar el pedido
+    if (!status || !Object.values(OrderStatus).includes(status)) {
+      return NextResponse.json(
+        { error: 'Estado inválido' },
+        { status: 400 }
+      )
+    }
+
+    const nextStatus: Record<OrderStatus, OrderStatus[]> = {
+      PENDING: ['CONFIRMED', 'REJECTED'],
+      CONFIRMED: ['PREPARING', 'CANCELLED'],
+      PREPARING: ['READY_FOR_PICKUP', 'OUT_FOR_DELIVERY', 'CANCELLED'],
+      READY_FOR_PICKUP: ['PICKED_UP', 'CANCELLED'],
+      OUT_FOR_DELIVERY: ['DELIVERED', 'CANCELLED'],
+      DELIVERED: [],
+      PICKED_UP: [],
+      CANCELLED: [],
+      REJECTED: []
+    }
+
+    if (!nextStatus[order.status].includes(status)) {
+      return NextResponse.json(
+        { error: 'Transición de estado no permitida' },
+        { status: 400 }
+      )
+    }
+
     const updatedOrder = await prisma.order.update({
-      where: { id: params.id },
+      where: {
+        id: params.id
+      },
       data: {
-        status: validatedData.status
+        status
       },
       include: {
-        customer: {
-          select: {
-            name: true,
-            email: true
-          }
-        },
         items: {
           include: {
             product: {
               select: {
                 id: true,
                 name: true,
+                description: true,
+                price: true,
                 imageUrl: true
               }
             }
@@ -159,16 +172,9 @@ export async function PATCH(
 
     return NextResponse.json(updatedOrder)
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Datos inválidos', details: error.errors },
-        { status: 400 }
-      )
-    }
-
     console.error('Error al actualizar el pedido:', error)
     return NextResponse.json(
-      { error: 'Error al actualizar el pedido' },
+      { error: 'Error interno del servidor' },
       { status: 500 }
     )
   }

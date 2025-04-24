@@ -29,6 +29,18 @@ const nextConfig = {
     outputFileTracingRoot: __dirname,
     serverActions: true,
   },
+  async rewrites() {
+    return [
+      {
+        source: "/contact",
+        destination: "/api/contact",
+      },
+      {
+        source: "/vendor/stats",
+        destination: "/api/stats",
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

@@ -7,7 +7,16 @@ import {
   ShoppingBagIcon,
   ClockIcon,
   ExclamationCircleIcon,
+  ChartBarIcon,
+  UserGroupIcon,
 } from '@heroicons/react/24/outline'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { RecentOrders } from '@/components/vendor/RecentOrders'
+import { SalesChart } from '@/components/vendor/SalesChart'
+import { ProductStats } from '@/components/vendor/ProductStats'
+import { OrderStats } from '@/components/vendor/OrderStats'
+import { SalesTrends } from '@/components/vendor/SalesTrends'
+import { OrderStatus } from '@prisma/client'
 
 export default async function VendorDashboard() {
   const session = await getServerSession(authOptions)
@@ -21,10 +30,29 @@ export default async function VendorDashboard() {
       orders: {
         where: {
           createdAt: {
-            gte: new Date(new Date().setDate(new Date().getDate() - 30)), // Últimos 30 días
+            gte: new Date(new Date().setDate(new Date().getDate() - 30)),
           },
         },
+        include: {
+          items: {
+            include: {
+              product: true
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
       },
+      products: {
+        include: {
+          _count: {
+            select: {
+              orderItems: true
+            }
+          }
+        }
+      }
     },
   })
 
@@ -55,21 +83,34 @@ export default async function VendorDashboard() {
         .reduce((acc, order) => acc + order.totalAmount, 0)
         .toFixed(2)}`,
       icon: BanknotesIcon,
+      change: '+12%',
+      changeType: 'positive'
     },
     {
       name: 'Pedidos Totales',
       value: business.orders.length,
       icon: ShoppingBagIcon,
+      change: '+8%',
+      changeType: 'positive'
     },
     {
       name: 'Pedidos Pendientes',
-      value: business.orders.filter((order) => order.status === 'PENDING').length,
+      value: business.orders.filter((order) => order.status === OrderStatus.PENDING).length,
       icon: ClockIcon,
+      change: '-3%',
+      changeType: 'negative'
     },
+    {
+      name: 'Productos Activos',
+      value: business.products.length,
+      icon: ChartBarIcon,
+      change: '+5%',
+      changeType: 'positive'
+    }
   ]
 
   return (
-    <div>
+    <div className="space-y-6">
       <div className="border-b border-gray-200 pb-5">
         <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl">
           {business.name}
@@ -79,28 +120,64 @@ export default async function VendorDashboard() {
         </p>
       </div>
 
-      <dl className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
-          <div
-            key={stat.name}
-            className="relative overflow-hidden rounded-lg bg-white px-4 pb-12 pt-5 shadow sm:px-6 sm:pt-6"
-          >
-            <dt>
-              <div className="absolute rounded-md bg-primary-500 p-3">
-                <stat.icon className="h-6 w-6 text-white" aria-hidden="true" />
-              </div>
-              <p className="ml-16 truncate text-sm font-medium text-gray-500">
+          <Card key={stat.name}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
                 {stat.name}
+              </CardTitle>
+              <stat.icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.value}</div>
+              <p className={`text-xs ${stat.changeType === 'positive' ? 'text-green-500' : 'text-red-500'}`}>
+                {stat.change} desde el mes pasado
               </p>
-            </dt>
-            <dd className="ml-16 flex items-baseline pb-6 sm:pb-7">
-              <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
-            </dd>
-          </div>
+            </CardContent>
+          </Card>
         ))}
-      </dl>
+      </div>
 
-      {/* Aquí irán más secciones como pedidos recientes, productos populares, etc. */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Ventas del Mes</CardTitle>
+          </CardHeader>
+          <CardContent className="pl-2">
+            <SalesChart orders={business.orders} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Tendencias de Ventas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SalesTrends orders={business.orders} />
+          </CardContent>
+        </Card>
+      </div>
+
+      <OrderStats orders={business.orders} />
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Productos más Vendidos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ProductStats products={business.products} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Pedidos Recientes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <RecentOrders orders={business.orders.slice(0, 5)} />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 } 

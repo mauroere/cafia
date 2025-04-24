@@ -10,139 +10,110 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { formatCurrency, formatDate, formatStatus } from '@/lib/utils'
+import { redirect } from 'next/navigation'
+import { OrderList } from '@/components/vendor/OrderList'
+import { OrderFilters } from '@/components/vendor/OrderFilters'
 
-async function getOrders(userId: string) {
+interface OrdersPageProps {
+  searchParams: {
+    page?: string
+    search?: string
+    status?: OrderStatus
+    date?: string
+  }
+}
+
+const ITEMS_PER_PAGE = 10
+
+export default async function OrdersPage({ searchParams }: OrdersPageProps) {
+  const session = await getServerSession(authOptions)
+  if (!session) redirect('/auth/login')
+
   const business = await prisma.business.findUnique({
     where: {
-      ownerId: userId
+      ownerId: session.user.id
     }
   })
 
   if (!business) {
-    throw new Error('Negocio no encontrado')
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold text-gray-900">No hay negocio configurado</h1>
+          <p className="mt-2 text-sm text-gray-700">
+            Por favor, configura tu negocio antes de ver los pedidos.
+          </p>
+          <div className="mt-6">
+            <a
+              href="/vendor/settings"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            >
+              Configurar Negocio
+            </a>
+          </div>
+        </div>
+      </div>
+    )
   }
 
-  return prisma.order.findMany({
-    where: {
-      businessId: business.id
-    },
-    include: {
-      customer: true,
-      items: {
-        include: {
-          product: true,
-        },
+  const page = Number(searchParams.page) || 1
+  const search = searchParams.search || ''
+  const status = searchParams.status
+  const date = searchParams.date
+
+  const where = {
+    businessId: business.id,
+    ...(search && {
+      OR: [
+        { id: { contains: search } },
+        { customerName: { contains: search, mode: 'insensitive' } },
+        { customerEmail: { contains: search, mode: 'insensitive' } }
+      ]
+    }),
+    ...(status && { status }),
+    ...(date && {
+      createdAt: {
+        gte: new Date(date)
+      }
+    })
+  }
+
+  const [orders, totalOrders] = await Promise.all([
+    prisma.order.findMany({
+      where,
+      orderBy: {
+        createdAt: 'desc'
       },
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  })
-}
+      skip: (page - 1) * ITEMS_PER_PAGE,
+      take: ITEMS_PER_PAGE
+    }),
+    prisma.order.count({ where })
+  ])
 
-export default async function OrdersPage() {
-  const session = await getServerSession(authOptions)
+  const totalPages = Math.ceil(totalOrders / ITEMS_PER_PAGE)
 
-  if (!session?.user?.id) {
-    return (
-      <div className="p-4 text-red-600">
-        Error: No se pudo obtener la información del usuario
-      </div>
-    )
+  if (page > totalPages && totalPages > 0) {
+    redirect('/vendor/orders?page=1')
   }
 
-  try {
-    const orders = await getOrders(session.user.id)
-
-    return (
-      <>
-        <header className="mb-8">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900">
-              Pedidos
-            </h1>
-          </div>
-        </header>
-
-        <main>
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="mt-8 flow-root">
-              <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                  <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
-                    <table className="min-w-full divide-y divide-gray-300">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
-                            Cliente
-                          </th>
-                          <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                            Productos
-                          </th>
-                          <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                            Total
-                          </th>
-                          <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                            Estado
-                          </th>
-                          <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                            Fecha
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200 bg-white">
-                        {orders.map((order) => (
-                          <tr key={order.id}>
-                            <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
-                              <div className="font-medium text-gray-900">{order.customer?.name || 'Cliente sin nombre'}</div>
-                              <div className="text-gray-500">{order.customer?.email}</div>
-                            </td>
-                            <td className="px-3 py-4 text-sm text-gray-500">
-                              <ul className="list-disc list-inside">
-                                {order.items.map((item) => (
-                                  <li key={item.id}>
-                                    {item.quantity}x {item.product.name}
-                                  </li>
-                                ))}
-                              </ul>
-                            </td>
-                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                              {formatCurrency(order.totalAmount)}
-                            </td>
-                            <td className="whitespace-nowrap px-3 py-4 text-sm">
-                              <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                                order.status === OrderStatus.PENDING
-                                  ? 'bg-yellow-100 text-yellow-800'
-                                  : order.status === OrderStatus.DELIVERED
-                                  ? 'bg-green-100 text-green-800'
-                                  : order.status === OrderStatus.CANCELLED || order.status === OrderStatus.REJECTED
-                                  ? 'bg-red-100 text-red-800'
-                                  : 'bg-gray-100 text-gray-800'
-                              }`}>
-                                {formatStatus(order.status)}
-                              </span>
-                            </td>
-                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                              {formatDate(order.createdAt)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
-      </>
-    )
-  } catch (error) {
-    console.error('Error al cargar los pedidos:', error)
-    return (
-      <div className="p-4 text-red-600">
-        Error al cargar los pedidos. Por favor, intente nuevamente.
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="sm:flex sm:items-center">
+        <div className="sm:flex-auto">
+          <h1 className="text-2xl font-semibold text-gray-900">Pedidos</h1>
+          <p className="mt-2 text-sm text-gray-700">
+            Lista de todos los pedidos realizados en tu restaurante.
+          </p>
+        </div>
       </div>
-    )
-  }
+
+      <OrderFilters />
+
+      <OrderList
+        orders={orders}
+        totalPages={totalPages}
+        currentPage={page}
+      />
+    </div>
+  )
 } 
