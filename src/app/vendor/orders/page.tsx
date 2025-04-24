@@ -67,10 +67,10 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
       OR: [
         { id: { contains: search } },
         { customer: { 
-          OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { email: { contains: search, mode: 'insensitive' } }
-          ]
+          name: { contains: search, mode: 'insensitive' }
+        }},
+        { customer: {
+          email: { contains: search, mode: 'insensitive' }
         }}
       ]
     }),
