@@ -31,7 +31,10 @@ type Order = {
   shortId: string
   status: OrderStatus
   totalAmount: number
-  createdAt: string
+  createdAt: Date
+  updatedAt: Date
+  businessId: string
+  customerId: string
   customer: {
     name: string | null
     email: string
@@ -86,6 +89,9 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
       status: true,
       totalAmount: true,
       createdAt: true,
+      updatedAt: true,
+      businessId: true,
+      customerId: true,
       deliveryAddress: true,
       customerPhone: true,
       notes: true,
