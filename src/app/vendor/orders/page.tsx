@@ -66,14 +66,8 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
     ...(search && {
       OR: [
         { id: { contains: search } },
-        {
-          customer: {
-            OR: [
-              { name: { contains: search, mode: 'insensitive' } },
-              { email: { contains: search, mode: 'insensitive' } }
-            ]
-          }
-        }
+        { customer: { name: { contains: search, mode: 'insensitive' } } },
+        { customer: { email: { contains: search, mode: 'insensitive' } } }
       ]
     }),
     ...(status && { status }),
