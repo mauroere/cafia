@@ -66,8 +66,12 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
     ...(search && {
       OR: [
         { id: { contains: search } },
-        { customerName: { contains: search, mode: 'insensitive' } },
-        { customerEmail: { contains: search, mode: 'insensitive' } }
+        { customer: { 
+          OR: [
+            { name: { contains: search, mode: 'insensitive' } },
+            { email: { contains: search, mode: 'insensitive' } }
+          ]
+        }}
       ]
     }),
     ...(status && { status }),
@@ -81,6 +85,9 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
   const [orders, totalOrders] = await Promise.all([
     prisma.order.findMany({
       where,
+      include: {
+        customer: true
+      },
       orderBy: {
         createdAt: 'desc'
       },
