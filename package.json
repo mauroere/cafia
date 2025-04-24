@@ -34,7 +34,8 @@
     "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3",
     "zod": "^3.22.4",
-    "qrcode.react": "^3.1.0"
+    "qrcode.react": "^3.1.0",
+    "sharp": "*"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
