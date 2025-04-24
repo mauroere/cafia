@@ -82,13 +82,37 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
       id: params.id,
       businessId: business.id
     },
-    include: {
+    select: {
+      id: true,
+      shortId: true,
+      status: true,
+      totalAmount: true,
+      createdAt: true,
+      deliveryAddress: true,
+      deliveryInstructions: true,
+      paymentMethod: true,
+      paymentStatus: true,
+      subtotal: true,
+      deliveryFee: true,
+      customerNotes: true,
       items: {
         include: {
-          product: true
+          product: {
+            select: {
+              id: true,
+              name: true,
+              imageUrl: true
+            }
+          }
         }
       },
-      customer: true
+      customer: {
+        select: {
+          name: true,
+          email: true,
+          phone: true
+        }
+      }
     }
   })
 
