@@ -18,7 +18,9 @@ import { OrderActions } from '@/components/vendor/OrderActions'
 type OrderItem = {
   id: string
   quantity: number
-  price: number
+  unitPrice: number
+  subtotal: number
+  productSnapshot: any
   product: {
     id: string
     name: string
@@ -107,12 +109,31 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
               imageUrl: true
             }
           }
+        },
+        select: {
+          id: true,
+          quantity: true,
+          unitPrice: true,
+          subtotal: true,
+          productSnapshot: true,
+          product: {
+            select: {
+              id: true,
+              name: true,
+              imageUrl: true
+            }
+          }
         }
       },
       customer: {
         select: {
           name: true,
           email: true
+        }
+      },
+      business: {
+        select: {
+          deliveryFee: true
         }
       }
     }
@@ -207,12 +228,12 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
                           {item.product.name}
                         </p>
                         <p className="text-sm text-gray-500">
-                          {item.quantity} x ${item.price.toFixed(2)}
+                          {item.quantity} x ${item.unitPrice.toFixed(2)}
                         </p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-900">
-                          ${(item.quantity * item.price).toFixed(2)}
+                          ${item.subtotal.toFixed(2)}
                         </p>
                       </div>
                     </div>
@@ -226,10 +247,10 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
         <div className="border-t border-gray-200">
           <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
             <div className="text-sm text-gray-500">
-              Subtotal: ${order.subtotal.toFixed(2)}
+              Subtotal: ${order.items.reduce((acc, item) => acc + item.subtotal, 0).toFixed(2)}
             </div>
             <div className="text-sm text-gray-500">
-              Envío: ${order.deliveryFee.toFixed(2)}
+              Envío: ${order.business.deliveryFee.toFixed(2)}
             </div>
             <div className="text-lg font-medium text-gray-900">
               Total: ${order.totalAmount.toFixed(2)}
