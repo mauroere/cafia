@@ -35,7 +35,6 @@ type Order = {
   customer: {
     name: string | null
     email: string
-    phone: string | null
   }
   items: OrderItem[]
   deliveryAddress: string | null
@@ -109,8 +108,7 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
       customer: {
         select: {
           name: true,
-          email: true,
-          phone: true
+          email: true
         }
       }
     }
