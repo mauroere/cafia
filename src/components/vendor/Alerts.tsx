@@ -1,7 +1,7 @@
 'use client'
 
 import { Order, OrderStatus, Product } from '@prisma/client'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { AlertCircle, Package, Star } from 'lucide-react'
 import Link from 'next/link'
 
