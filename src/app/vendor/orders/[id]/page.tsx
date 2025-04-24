@@ -38,7 +38,6 @@ type Order = {
   }
   items: OrderItem[]
   deliveryAddress: string | null
-  deliveryInstructions: string | null
   paymentMethod: string
   paymentStatus: string
   subtotal: number
@@ -88,7 +87,6 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
       totalAmount: true,
       createdAt: true,
       deliveryAddress: true,
-      deliveryInstructions: true,
       paymentMethod: true,
       paymentStatus: true,
       subtotal: true,
