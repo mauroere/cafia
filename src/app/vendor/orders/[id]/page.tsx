@@ -101,15 +101,6 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
       mercadoPagoPaymentId: true,
       mercadoPagoStatus: true,
       items: {
-        include: {
-          product: {
-            select: {
-              id: true,
-              name: true,
-              imageUrl: true
-            }
-          }
-        },
         select: {
           id: true,
           quantity: true,
