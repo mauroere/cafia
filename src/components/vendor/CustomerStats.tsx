@@ -11,21 +11,21 @@ interface CustomerStatsProps {
 export function CustomerStats({ orders }: CustomerStatsProps) {
   // Calcular estadísticas de clientes
   const customerOrders = orders.reduce((acc, order) => {
-    if (!acc[order.customerEmail]) {
-      acc[order.customerEmail] = {
+    if (!acc[order.customerId]) {
+      acc[order.customerId] = {
         count: 0,
         total: 0,
         firstOrder: order.createdAt,
         lastOrder: order.createdAt
       }
     }
-    acc[order.customerEmail].count++
-    acc[order.customerEmail].total += order.total
-    if (order.createdAt < acc[order.customerEmail].firstOrder) {
-      acc[order.customerEmail].firstOrder = order.createdAt
+    acc[order.customerId].count++
+    acc[order.customerId].total += order.totalAmount
+    if (order.createdAt < acc[order.customerId].firstOrder) {
+      acc[order.customerId].firstOrder = order.createdAt
     }
-    if (order.createdAt > acc[order.customerEmail].lastOrder) {
-      acc[order.customerEmail].lastOrder = order.createdAt
+    if (order.createdAt > acc[order.customerId].lastOrder) {
+      acc[order.customerId].lastOrder = order.createdAt
     }
     return acc
   }, {} as Record<string, { count: number; total: number; firstOrder: Date; lastOrder: Date }>)
@@ -34,7 +34,7 @@ export function CustomerStats({ orders }: CustomerStatsProps) {
   const returningCustomers = Object.values(customerOrders).filter(c => c.count > 1).length
   const newCustomers = totalCustomers - returningCustomers
   const averageOrderValue = orders.length > 0
-    ? orders.reduce((acc, order) => acc + order.total, 0) / orders.length
+    ? orders.reduce((acc, order) => acc + order.totalAmount, 0) / orders.length
     : 0
 
   return (
