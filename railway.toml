@@ -3,7 +3,7 @@ builder = "nixpacks"
 buildCommand = "chmod +x migrate.sh && ./migrate.sh && npm run build"
 
 [deploy]
-startCommand = "node .next/standalone/server.js"
+startCommand = "npx next start -p $PORT"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"

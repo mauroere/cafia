@@ -26,7 +26,7 @@ const nextConfig = {
   // Configuración para Railway
   output: "standalone",
   experimental: {
-    outputFileTracingRoot: path.join(__dirname, "../../"),
+    outputFileTracingRoot: __dirname,
   },
 };
 
