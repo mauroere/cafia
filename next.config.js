@@ -18,6 +18,7 @@ const nextConfig = {
         hostname: "railway.app",
       },
     ],
+    domains: ['localhost'],
   },
   env: {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
@@ -26,8 +27,7 @@ const nextConfig = {
   // Configuración para Railway
   output: "standalone",
   experimental: {
-    outputFileTracingRoot: __dirname,
-    serverActions: true,
+    outputFileTracingRoot: undefined,
   },
   async rewrites() {
     return [
