@@ -2,65 +2,63 @@
 
 import { Order, OrderStatus } from '@prisma/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { OrderStatusBadge } from './OrderStatusBadge'
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 
 interface OrderStatsProps {
   orders: Order[]
 }
 
+const statusColors: Record<OrderStatus, string> = {
+  PENDING: '#f59e0b',
+  CONFIRMED: '#3b82f6',
+  PREPARING: '#8b5cf6',
+  READY: '#10b981',
+  DELIVERED: '#6366f1',
+  CANCELLED: '#ef4444'
+}
+
 const statusLabels: Record<OrderStatus, string> = {
-  PENDING: 'Pendientes',
-  CONFIRMED: 'Confirmados',
-  PREPARING: 'En preparación',
-  READY_FOR_PICKUP: 'Listos para recoger',
-  OUT_FOR_DELIVERY: 'En reparto',
-  DELIVERED: 'Entregados',
-  PICKED_UP: 'Recogidos',
-  CANCELLED: 'Cancelados',
-  REJECTED: 'Rechazados'
+  PENDING: 'Pendiente',
+  CONFIRMED: 'Confirmado',
+  PREPARING: 'En Preparación',
+  READY: 'Listo',
+  DELIVERED: 'Entregado',
+  CANCELLED: 'Cancelado'
 }
 
 export function OrderStats({ orders }: OrderStatsProps) {
-  const stats = Object.values(OrderStatus).map((status) => ({
-    status,
-    count: orders.filter((order) => order.status === status).length,
-    total: orders.filter((order) => order.status === status)
-      .reduce((acc, order) => acc + order.totalAmount, 0)
+  // Calcular distribución por estado
+  const statusData = Object.values(OrderStatus).map(status => ({
+    name: statusLabels[status],
+    value: orders.filter(order => order.status === status).length
   }))
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Estadísticas de Pedidos</CardTitle>
+        <CardTitle>Distribución de Pedidos por Estado</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {stats.map((stat) => (
-            <div
-              key={stat.status}
-              className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-            >
-              <div className="flex items-center space-x-3">
-                <OrderStatusBadge status={stat.status} />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    {statusLabels[stat.status]}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {stat.count} pedidos
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">
-                  ${stat.total.toFixed(2)}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Total
-                </p>
-              </div>
-            </div>
-          ))}
+        <div className="h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={statusData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+              >
+                {statusData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={statusColors[Object.keys(statusLabels)[index] as OrderStatus]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
       </CardContent>
     </Card>
