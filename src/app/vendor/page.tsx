@@ -10,7 +10,7 @@ import {
   ChartBarIcon,
   UserGroupIcon,
 } from '@heroicons/react/24/outline'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { RecentOrders } from '@/components/vendor/RecentOrders'
 import { SalesChart } from '@/components/vendor/SalesChart'
 import { ProductStats } from '@/components/vendor/ProductStats'
