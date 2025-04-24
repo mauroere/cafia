@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import axios from 'axios'
 import OrderDetails from '@/components/vendor/OrderDetails'
-import { OrderStatus } from '@prisma/client'
+import { OrderStatus, OrderType } from '@prisma/client'
 import { toast } from 'react-hot-toast'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -38,11 +38,11 @@ type Order = {
   }
   items: OrderItem[]
   deliveryAddress: string | null
-  paymentMethod: string
-  paymentStatus: string
-  subtotal: number
-  deliveryFee: number
-  customerNotes?: string | null
+  customerPhone: string | null
+  notes: string | null
+  type: OrderType
+  mercadoPagoPaymentId: string | null
+  mercadoPagoStatus: string | null
 }
 
 interface OrderDetailsPageProps {
@@ -87,11 +87,11 @@ export default async function OrderDetailsPage({ params }: OrderDetailsPageProps
       totalAmount: true,
       createdAt: true,
       deliveryAddress: true,
-      paymentMethod: true,
-      paymentStatus: true,
-      subtotal: true,
-      deliveryFee: true,
-      customerNotes: true,
+      customerPhone: true,
+      notes: true,
+      type: true,
+      mercadoPagoPaymentId: true,
+      mercadoPagoStatus: true,
       items: {
         include: {
           product: {
