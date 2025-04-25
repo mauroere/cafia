@@ -17,7 +17,7 @@ export function SalesTrends({ orders }: SalesTrendsProps) {
     if (!acc[date]) {
       acc[date] = 0
     }
-    acc[date] += order.total
+    acc[date] += order.totalAmount
     return acc
   }, {} as Record<string, number>)
 
