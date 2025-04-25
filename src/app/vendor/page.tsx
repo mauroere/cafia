@@ -38,6 +38,12 @@ export default async function VendorDashboard() {
             include: {
               product: true
             }
+          },
+          customer: {
+            select: {
+              name: true,
+              email: true
+            }
           }
         },
         orderBy: {
