@@ -1,13 +1,17 @@
 'use client'
 
-import { Order, OrderStatus } from '@prisma/client'
+import { Order, OrderStatus, User } from '@prisma/client'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import Link from 'next/link'
 import { OrderStatusBadge } from './OrderStatusBadge'
 
+interface OrderWithCustomer extends Order {
+  customer: Pick<User, 'name' | 'email'>
+}
+
 interface RecentOrdersProps {
-  orders: Order[]
+  orders: OrderWithCustomer[]
 }
 
 const statusColors: Record<OrderStatus, string> = {
@@ -46,7 +50,7 @@ export function RecentOrders({ orders }: RecentOrdersProps) {
                     Pedido #{order.id.slice(0, 8)}
                   </Link>
                   <div className="mt-1 text-sm text-gray-500">
-                    {order.customerName} • {order.customerEmail}
+                    {order.customer.name} • {order.customer.email}
                   </div>
                   <div className="mt-1 text-sm text-gray-500">
                     {format(new Date(order.createdAt), "d 'de' MMMM 'de' yyyy 'a las' HH:mm", { locale: es })}
