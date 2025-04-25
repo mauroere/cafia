@@ -1,6 +1,6 @@
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Star } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
