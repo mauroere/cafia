@@ -12,8 +12,8 @@ export function ProductStats({ products }: ProductStatsProps) {
   // Preparar datos para el gráfico
   const chartData = products.map(product => ({
     name: product.name,
-    stock: product.stock,
-    price: product.price
+    price: product.price,
+    isAvailable: product.isAvailable ? 1 : 0
   }))
 
   return (
@@ -30,7 +30,7 @@ export function ProductStats({ products }: ProductStatsProps) {
               <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
               <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
               <Tooltip />
-              <Bar yAxisId="left" dataKey="stock" fill="#8884d8" name="Stock" />
+              <Bar yAxisId="left" dataKey="isAvailable" fill="#8884d8" name="Disponible" />
               <Bar yAxisId="right" dataKey="price" fill="#82ca9d" name="Precio" />
             </BarChart>
           </ResponsiveContainer>
