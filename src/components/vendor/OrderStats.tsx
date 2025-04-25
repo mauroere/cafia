@@ -12,18 +12,24 @@ const statusColors: Record<OrderStatus, string> = {
   PENDING: '#f59e0b',
   CONFIRMED: '#3b82f6',
   PREPARING: '#8b5cf6',
-  READY: '#10b981',
-  DELIVERED: '#6366f1',
-  CANCELLED: '#ef4444'
+  READY_FOR_PICKUP: '#10b981',
+  OUT_FOR_DELIVERY: '#6366f1',
+  DELIVERED: '#10b981',
+  PICKED_UP: '#10b981',
+  CANCELLED: '#ef4444',
+  REJECTED: '#ef4444'
 }
 
 const statusLabels: Record<OrderStatus, string> = {
   PENDING: 'Pendiente',
   CONFIRMED: 'Confirmado',
   PREPARING: 'En Preparación',
-  READY: 'Listo',
+  READY_FOR_PICKUP: 'Listo para recoger',
+  OUT_FOR_DELIVERY: 'En camino',
   DELIVERED: 'Entregado',
-  CANCELLED: 'Cancelado'
+  PICKED_UP: 'Recogido',
+  CANCELLED: 'Cancelado',
+  REJECTED: 'Rechazado'
 }
 
 export function OrderStats({ orders }: OrderStatsProps) {
