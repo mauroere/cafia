@@ -1,10 +1,16 @@
 'use client'
 
-import { Review } from '@prisma/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Star } from 'lucide-react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+
+interface Review {
+  id: string
+  rating: number
+  comment: string | null
+  createdAt: Date
+}
 
 interface ReviewsProps {
   reviews: Review[]
