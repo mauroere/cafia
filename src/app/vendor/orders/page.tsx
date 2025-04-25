@@ -96,7 +96,13 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
     prisma.order.findMany({
       where,
       include: {
-        customer: true
+        customer: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc'
