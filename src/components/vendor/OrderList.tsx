@@ -1,12 +1,16 @@
 'use client'
 
-import { Order, OrderStatus } from '@prisma/client'
+import { Order, OrderStatus, User } from '@prisma/client'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import Link from 'next/link'
 
+type OrderWithCustomer = Order & {
+  customer: Pick<User, 'id' | 'name' | 'email'>
+}
+
 interface OrderListProps {
-  orders: Order[]
+  orders: OrderWithCustomer[]
   totalPages: number
   currentPage: number
 }
