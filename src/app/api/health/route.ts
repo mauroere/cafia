@@ -4,9 +4,23 @@ import { prisma } from '@/lib/prisma'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+interface DatabaseCheck {
+  status: 'ok' | 'error'
+  responseTime: number
+  error?: string
+}
+
+interface HealthCheck {
+  status: 'ok' | 'error'
+  timestamp: string
+  checks: {
+    database: DatabaseCheck
+  }
+}
+
 export async function GET() {
   const startTime = Date.now()
-  const health = {
+  const health: HealthCheck = {
     status: 'ok',
     timestamp: new Date().toISOString(),
     checks: {
