@@ -1,6 +1,6 @@
 [build]
 builder = "nixpacks"
-buildCommand = "chmod +x migrate.sh && ./migrate.sh && npm run build"
+buildCommand = "npm install --production && chmod +x migrate.sh && ./migrate.sh && npm run build"
 
 [deploy]
 startCommand = "node .next/standalone/server.js"
