@@ -47,9 +47,12 @@
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "prisma": "^6.6.0",
-    "eslint": "^8.57.0",
+    "eslint": "^8.56.0",
     "eslint-config-next": "14.1.0",
     "rimraf": "^5.0.5",
-    "glob": "^10.3.10"
+    "glob": "^10.3.10",
+    "@eslint/config-array": "^1.0.0",
+    "@eslint/object-schema": "^1.0.0",
+    "lru-cache": "^10.2.0"
   }
 } 

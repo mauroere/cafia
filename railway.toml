@@ -3,12 +3,12 @@ builder = "nixpacks"
 buildCommand = "npm install --production && chmod +x migrate.sh && ./migrate.sh && npm run build"
 
 [deploy]
-startCommand = "node .next/standalone/server.js"
+startCommand = "PORT=8080 node .next/standalone/server.js"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 300
 restartPolicyType = "on_failure"
 restartPolicyMaxRetries = 10
-port = 3000
+port = 8080
 
 [deploy.env]
 NODE_ENV = "production"
