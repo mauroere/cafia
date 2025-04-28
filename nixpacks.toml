@@ -2,4 +2,7 @@
 libvips = "libvips"
 
 [context.production.environment]
-PORT = "3000" 
+PORT = "3000"
+
+[build]
+nixpacks_version = "1.32.0" 
