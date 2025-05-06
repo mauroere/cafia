@@ -38,6 +38,9 @@ npx prisma db execute --stdin <<< "SELECT 1" || {
   exit 1
 }
 
+# Create migrations directory if it doesn't exist
+mkdir -p prisma/migrations
+
 echo "Migration completed successfully!"
 
 # Seed the database if needed

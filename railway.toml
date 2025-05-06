@@ -17,4 +17,5 @@ NODE_ENV = "production"
 # DATABASE_URL ya está configurada por Railway
 NEXTAUTH_URL = "https://${RAILWAY_STATIC_URL}"
 NEXTAUTH_SECRET = "${NEXTAUTH_SECRET}"
-DATABASE_URL = "${DATABASE_URL}" 
+DATABASE_URL = "${DATABASE_URL}"
+PORT = "8080" 
