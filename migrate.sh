@@ -10,9 +10,9 @@ if [ -z "$DATABASE_URL" ]; then
   exit 1
 fi
 
-# Run database connection check
-echo "=== Ejecutando diagnóstico de base de datos ==="
-node scripts/db-check.js
+# Run Railway database check
+echo "=== Ejecutando diagnóstico de base de datos Railway ==="
+node scripts/railway-db-check.js
 
 if [ $? -ne 0 ]; then
   echo "❌ El diagnóstico de la base de datos falló"
