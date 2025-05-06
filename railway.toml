@@ -16,4 +16,5 @@ NODE_ENV = "production"
 # Railway automáticamente inyecta estas variables
 # DATABASE_URL ya está configurada por Railway
 NEXTAUTH_URL = "https://${RAILWAY_STATIC_URL}"
-NEXTAUTH_SECRET = "${NEXTAUTH_SECRET}" 
+NEXTAUTH_SECRET = "${NEXTAUTH_SECRET}"
+DATABASE_URL = "${DATABASE_URL}" 
