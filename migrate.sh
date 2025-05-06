@@ -41,6 +41,12 @@ npx prisma db execute --stdin <<< "SELECT 1" || {
 # Create migrations directory if it doesn't exist
 mkdir -p prisma/migrations
 
+# Verify Prisma Client generation
+if [ ! -f "node_modules/.prisma/client/index.js" ]; then
+  echo "Prisma Client not generated correctly"
+  exit 1
+fi
+
 echo "Migration completed successfully!"
 
 # Seed the database if needed
