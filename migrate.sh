@@ -46,7 +46,10 @@ npx prisma generate
 echo "=== Aplicando cambios en la base de datos ==="
 if [ -d "prisma/migrations" ] && [ "$(ls -A prisma/migrations)" ]; then
   echo "Ejecutando migraciones existentes..."
-  npx prisma migrate deploy
+  npx prisma migrate deploy || {
+    echo "⚠️ Falló migrate deploy, intentando db push..."
+    npx prisma db push --accept-data-loss
+  }
 else
   echo "No hay migraciones existentes, usando db push..."
   npx prisma db push --accept-data-loss
