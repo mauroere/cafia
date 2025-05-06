@@ -4,6 +4,10 @@ set -e
 
 echo "Starting database migration..."
 
+# Run database connection check
+echo "Running database connection check..."
+node scripts/db-check.js
+
 # Wait for database to be ready
 echo "Waiting for database to be ready..."
 max_attempts=30
