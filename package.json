@@ -51,5 +51,8 @@
     "eslint-config-next": "14.1.0",
     "rimraf": "^5.0.5",
     "glob": "^10.3.10"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 } 
