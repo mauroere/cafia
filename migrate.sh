@@ -44,7 +44,13 @@ npx prisma generate
 
 # Deploy database changes
 echo "=== Aplicando cambios en la base de datos ==="
-npx prisma db push --accept-data-loss
+if [ -d "prisma/migrations" ] && [ "$(ls -A prisma/migrations)" ]; then
+  echo "Ejecutando migraciones existentes..."
+  npx prisma migrate deploy
+else
+  echo "No hay migraciones existentes, usando db push..."
+  npx prisma db push --accept-data-loss
+fi
 
 # Verify the database connection
 echo "=== Verificando conexión final ==="

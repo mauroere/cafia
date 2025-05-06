@@ -1,15 +1,18 @@
 [build]
 builder = "nixpacks"
 buildCommand = "npm cache clean --force && npm install --omit=dev --no-audit --no-fund && chmod +x migrate.sh && ./migrate.sh && npm run build"
+nixpacksConfigPath = "nixpacks.toml"
 
 [deploy]
+runtime = "V2"
+numReplicas = 1
 startCommand = "PORT=8080 node .next/standalone/server.js"
 healthcheckPath = "/api/health"
-healthcheckTimeout = 300
+preDeployCommand = ["npx prisma migrate deploy"]
+sleepApplication = false
 restartPolicyType = "on_failure"
+healthcheckTimeout = 300
 restartPolicyMaxRetries = 10
-port = 8080
-autoDeploy = true
 
 [deploy.env]
 NODE_ENV = "production"
@@ -19,4 +22,5 @@ NEXTAUTH_URL = "https://${RAILWAY_STATIC_URL}"
 NEXTAUTH_SECRET = "${NEXTAUTH_SECRET}"
 DATABASE_URL = "${DATABASE_URL}"
 PORT = "8080"
-RAILWAY_ENVIRONMENT = "production" 
+RAILWAY_ENVIRONMENT = "production"
+NEXT_PUBLIC_APP_URL = "https://${RAILWAY_STATIC_URL}" 

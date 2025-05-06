@@ -4,8 +4,30 @@ nodejs = "18"
 npm = "9"
 
 [context.production.environment]
-PORT = "3000"
+PORT = "8080"
 
 [build]
 nixpacks_version = "1.32.0"
-builder = "nixpacks" 
+builder = "nixpacks"
+
+[phases.setup]
+nixPkgs = ["nodejs_18", "openssl"]
+
+[phases.install]
+cmds = ["npm install"]
+
+[phases.build]
+cmds = [
+  "npm cache clean --force",
+  "npm install --omit=dev --no-audit --no-fund",
+  "chmod +x migrate.sh",
+  "./migrate.sh",
+  "npm run build"
+]
+
+[start]
+cmd = "PORT=8080 node .next/standalone/server.js"
+
+[variables]
+NODE_ENV = "production"
+PORT = "8080" 

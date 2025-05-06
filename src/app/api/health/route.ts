@@ -1,52 +1,58 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import { PrismaClient } from '@prisma/client'
+import { config } from '@/lib/config'
+
+const prisma = new PrismaClient()
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-interface DatabaseCheck {
-  status: 'ok' | 'error'
-  responseTime: number
-  error?: string
-}
-
-interface HealthCheck {
-  status: 'ok' | 'error'
-  timestamp: string
-  checks: {
-    database: DatabaseCheck
-  }
-}
-
 export async function GET() {
   const startTime = Date.now()
-  const health: HealthCheck = {
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    checks: {
-      database: {
-        status: 'ok',
-        responseTime: 0
-      }
-    }
-  }
-
+  
   try {
-    // Verificar conexión básica a la base de datos
-    const dbStartTime = Date.now()
+    // Verificar conexión a la base de datos
     await prisma.$queryRaw`SELECT 1`
-    const dbEndTime = Date.now()
+    const dbResponseTime = Date.now() - startTime
     
-    health.checks.database.responseTime = dbEndTime - dbStartTime
-    health.checks.database.status = 'ok'
-    
-    return NextResponse.json(health, { status: 200 })
+    return NextResponse.json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: config.app.env,
+      database: {
+        status: 'connected',
+        responseTime: dbResponseTime,
+        url: config.database.url ? 'configured' : 'not configured'
+      },
+      auth: {
+        url: config.auth.url ? 'configured' : 'not configured'
+      },
+      app: {
+        url: config.app.url
+      }
+    }, { status: 200 })
   } catch (error) {
-    console.error('Healthcheck failed:', error)
-    health.status = 'error'
-    health.checks.database.status = 'error'
-    health.checks.database.error = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Health check failed:', error)
     
-    return NextResponse.json(health, { status: 503 })
+    return NextResponse.json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: config.app.env,
+      database: {
+        status: 'disconnected',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        url: config.database.url ? 'configured' : 'not configured'
+      },
+      auth: {
+        url: config.auth.url ? 'configured' : 'not configured'
+      },
+      app: {
+        url: config.app.url
+      }
+    }, { status: 503 })
+  } finally {
+    await prisma.$disconnect()
   }
 } 
