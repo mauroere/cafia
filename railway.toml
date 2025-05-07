@@ -6,7 +6,7 @@ nixpacksConfigPath = "nixpacks.toml"
 [deploy]
 runtime = "V2"
 numReplicas = 1
-startCommand = "node scripts/start.js"
+startCommand = "node .next/standalone/server.js"
 healthcheckPath = "/api/health"
 preDeployCommand = ["npx prisma migrate deploy"]
 sleepApplication = false
