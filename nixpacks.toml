@@ -11,22 +11,18 @@ nixpacks_version = "1.32.0"
 builder = "nixpacks"
 
 [phases.setup]
-nixPkgs = ["nodejs_18", "openssl"]
+nixPkgs = ["nodejs_18", "openssl", "python3"]
 
 [phases.install]
 cmds = ["npm install"]
 
 [phases.build]
 cmds = [
-  "npm cache clean --force",
-  "npm install --omit=dev --no-audit --no-fund",
-  "chmod +x migrate.sh",
-  "./migrate.sh",
   "npm run build"
 ]
 
 [start]
-cmd = "PORT=8080 node .next/standalone/server.js"
+cmd = "npm start"
 
 [variables]
 NODE_ENV = "production"
