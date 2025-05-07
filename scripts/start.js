@@ -1,6 +1,7 @@
 const { spawn } = require("child_process");
 const { PrismaClient } = require("@prisma/client");
 const path = require("path");
+const fs = require("fs");
 
 const prisma = new PrismaClient();
 
@@ -10,30 +11,61 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 // Función para verificar la base de datos
 async function checkDatabase() {
   try {
-    console.log("Checking database connection...");
+    console.log("=== Database Connection Check ===");
+    console.log(
+      "DATABASE_URL:",
+      process.env.DATABASE_URL ? "Configured" : "Not configured"
+    );
+
     await prisma.$queryRaw`SELECT 1`;
-    console.log("Database connection successful");
+    console.log("✅ Database connection successful");
     return true;
   } catch (error) {
-    console.error("Database connection failed:", error);
+    console.error("❌ Database connection failed:", error);
     return false;
   } finally {
     await prisma.$disconnect();
   }
 }
 
+// Función para verificar el archivo del servidor
+function checkServerFile() {
+  const serverPath = path.join(process.cwd(), ".next/standalone/server.js");
+  console.log("=== Server File Check ===");
+  console.log("Checking server file at:", serverPath);
+
+  if (!fs.existsSync(serverPath)) {
+    console.error("❌ Server file not found at:", serverPath);
+    return false;
+  }
+
+  console.log("✅ Server file found");
+  return true;
+}
+
 // Función para iniciar el servidor
 async function startServer() {
   try {
+    console.log("=== Starting Application ===");
+    console.log("Current directory:", process.cwd());
+    console.log("NODE_ENV:", process.env.NODE_ENV);
+    console.log("PORT:", process.env.PORT || "8080");
+
+    // Verificar el archivo del servidor
+    if (!checkServerFile()) {
+      console.error("Server file check failed. Exiting...");
+      process.exit(1);
+    }
+
     // Verificar la conexión a la base de datos
     const dbConnected = await checkDatabase();
     if (!dbConnected) {
-      console.error("Failed to connect to database. Exiting...");
+      console.error("Database connection check failed. Exiting...");
       process.exit(1);
     }
 
     // Iniciar el servidor Next.js
-    console.log("Starting Next.js server...");
+    console.log("=== Starting Next.js Server ===");
     const serverPath = path.join(process.cwd(), ".next/standalone/server.js");
 
     const server = spawn("node", [serverPath], {
@@ -46,13 +78,13 @@ async function startServer() {
     });
 
     server.on("error", (error) => {
-      console.error("Failed to start server:", error);
+      console.error("❌ Failed to start server:", error);
       process.exit(1);
     });
 
     server.on("exit", (code) => {
       if (code !== 0) {
-        console.error(`Server exited with code ${code}`);
+        console.error(`❌ Server exited with code ${code}`);
         process.exit(code);
       }
     });
@@ -68,19 +100,19 @@ async function startServer() {
       server.kill("SIGINT");
     });
   } catch (error) {
-    console.error("Error during startup:", error);
+    console.error("❌ Error during startup:", error);
     process.exit(1);
   }
 }
 
 // Manejar errores no capturados
 process.on("uncaughtException", (error) => {
-  console.error("Uncaught Exception:", error);
+  console.error("❌ Uncaught Exception:", error);
   process.exit(1);
 });
 
 process.on("unhandledRejection", (reason, promise) => {
-  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+  console.error("❌ Unhandled Rejection at:", promise, "reason:", reason);
   process.exit(1);
 });
 
