@@ -8,6 +8,30 @@ const prisma = new PrismaClient();
 // Función para esperar
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+// Función para verificar variables de entorno requeridas
+function checkEnvironmentVariables() {
+  console.log("=== Environment Variables Check ===");
+  const requiredVars = [
+    "DATABASE_URL",
+    "NEXTAUTH_SECRET",
+    "NEXTAUTH_URL",
+    "NEXT_PUBLIC_APP_URL",
+  ];
+
+  const missingVars = requiredVars.filter((varName) => !process.env[varName]);
+
+  if (missingVars.length > 0) {
+    console.error(
+      "❌ Missing required environment variables:",
+      missingVars.join(", ")
+    );
+    return false;
+  }
+
+  console.log("✅ All required environment variables are configured");
+  return true;
+}
+
 // Función para verificar la base de datos
 async function checkDatabase() {
   try {
@@ -16,7 +40,6 @@ async function checkDatabase() {
       "DATABASE_URL:",
       process.env.DATABASE_URL ? "Configured" : "Not configured"
     );
-
     await prisma.$queryRaw`SELECT 1`;
     console.log("✅ Database connection successful");
     return true;
@@ -26,6 +49,32 @@ async function checkDatabase() {
   } finally {
     await prisma.$disconnect();
   }
+}
+
+// Función para verificar la base de datos con reintentos
+async function checkDatabaseWithRetries(maxRetries = 5, retryDelay = 5000) {
+  console.log(
+    `Intentando conectar a la base de datos con ${maxRetries} reintentos...`
+  );
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    console.log(`Intento ${attempt} de ${maxRetries}`);
+
+    const connected = await checkDatabase();
+    if (connected) {
+      return true;
+    }
+
+    if (attempt < maxRetries) {
+      console.log(`Reintentando en ${retryDelay / 1000} segundos...`);
+      await sleep(retryDelay);
+    }
+  }
+
+  console.error(
+    `Fallaron todos los ${maxRetries} intentos de conexión a la base de datos.`
+  );
+  return false;
 }
 
 // Función para verificar el archivo del servidor
@@ -51,16 +100,24 @@ async function startServer() {
     console.log("NODE_ENV:", process.env.NODE_ENV);
     console.log("PORT:", process.env.PORT || "8080");
 
+    // Verificar variables de entorno
+    if (!checkEnvironmentVariables()) {
+      console.error("Environment variables check failed. Exiting...");
+      process.exit(1);
+    }
+
     // Verificar el archivo del servidor
     if (!checkServerFile()) {
       console.error("Server file check failed. Exiting...");
       process.exit(1);
     }
 
-    // Verificar la conexión a la base de datos
-    const dbConnected = await checkDatabase();
+    // Verificar la conexión a la base de datos con reintentos
+    const dbConnected = await checkDatabaseWithRetries(5, 5000);
     if (!dbConnected) {
-      console.error("Database connection check failed. Exiting...");
+      console.error(
+        "Database connection check failed after retries. Exiting..."
+      );
       process.exit(1);
     }
 
